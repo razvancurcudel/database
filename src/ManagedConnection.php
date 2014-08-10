@@ -14,7 +14,6 @@ namespace KoolKode\Database;
 use KoolKode\Transaction\TransactionInterface;
 use KoolKode\Transaction\TransactionManagerInterface;
 use KoolKode\Transaction\TransactionResourceInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * Managed statements are connected to an external transaction manager.
@@ -25,11 +24,11 @@ class ManagedConnection extends Connection implements TransactionResourceInterfa
 {
 	protected $manager;
 	
-	public function __construct(TransactionManagerInterface $manager, LoggerInterface $logger, $dsn, $username = NULL, $password = NULL, array $options = [])
+	public function __construct(TransactionManagerInterface $manager, $dsn, $username = NULL, $password = NULL, array $options = [])
 	{
-		$this->manager = $manager;
+		parent::__construct($dsn, $username, $password, $options);
 		
-		parent::__construct($logger, $dsn, $username, $password, $options);
+		$this->manager = $manager;
 	}
 	
 	public static function getStatementClass()

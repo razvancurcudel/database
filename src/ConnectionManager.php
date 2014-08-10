@@ -30,7 +30,7 @@ class ConnectionManager implements ConnectionManagerInterface
 	
 	protected $connections = [];
 	
-	public function __construct(Configuration $config, LoggerInterface $logger, TransactionManagerInterface $manager = NULL)
+	public function __construct(Configuration $config, LoggerInterface $logger = NULL, TransactionManagerInterface $manager = NULL)
 	{
 		$this->config = $config;
 		$this->logger = $logger;

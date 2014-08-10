@@ -32,10 +32,8 @@ class Connection extends \PDO
 	
 	protected $logger;
 	
-	public function __construct(LoggerInterface $logger, $dsn, $username = NULL, $password = NULL, array $options = [])
+	public function __construct($dsn, $username = NULL, $password = NULL, array $options = [])
 	{
-		$this->logger = $logger;
-		
 		$options[self::ATTR_STATEMENT_CLASS] = [static::getStatementClass(), [$this]];
 		
 		parent::__construct($dsn, $username, $password, $options);
@@ -53,6 +51,11 @@ class Connection extends \PDO
 	public function getLogger()
 	{
 		return $this->logger;
+	}
+	
+	public function setLogger(LoggerInterface $logger)
+	{
+		$this->logger = $logger;
 	}
 	
 	public function isDebug()
