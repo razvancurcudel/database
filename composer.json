@@ -1,0 +1,30 @@
+{
+	"name" : "koolkode/database",
+	"description" : "KoolKode Database Connections",
+	"keywords" : [
+		"koolkode",
+		"database"
+	],
+	"type" : "library",
+	"license" : "MIT",
+	"homepage" : "https://github.com/koolkode/database",
+	"authors" : [{
+			"name" : "Martin Schröder",
+			"email" : "m.schroeder2007@gmail.com"
+		}
+	],
+	"minimum-stability" : "dev",
+	"require" : {
+		"php" : ">=5.5.0",
+		"psr/log" : "1.0.0",
+		"koolkode/transaction" : "dev-master"
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "4.*"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"KoolKode\\Database\\" : "src/"
+		}
+	}
+}

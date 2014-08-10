@@ -1,4 +1,3 @@
-database
-========
+# KoolKode Database Connections
 
-Database Connections based on PDO
+Provides additional functionality based on and integrated with PDO.
