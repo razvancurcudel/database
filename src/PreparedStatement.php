@@ -73,13 +73,13 @@ class PreparedStatement extends \PDOStatement
 		{
 			$input = array_merge($this->boundParams, (array)$params);
 			
-			$this->logger->info('Executing SQL query {sql}', [
+			$this->logger->info('Executing SQL query: <{sql}>', [
 				'sql' => trim(preg_replace("'\s+'", ' ', $this->queryString))
 			]);
 			
 			foreach($input as $k => $v)
 			{
-				$this->logger->info('With param {name} bound to {value}', [
+				$this->logger->debug('Param "{name}" bound to <{value}>', [
 					'name' => $k,
 					'value' => is_object($v) ? (string)$v : $v
 				]);
@@ -90,13 +90,13 @@ class PreparedStatement extends \PDOStatement
 		{
 			$input = array_merge($this->boundParams, (array)$params);
 			
-			$this->logger->info('Executing SQL query {sql}', [
+			$this->logger->info('Executing SQL query: <{sql}>', [
 				'sql' => trim(preg_replace("'\s+'", ' ', $this->queryString))
 			]);
 			
 			foreach($input as $k => $v)
 			{
-				$this->logger->info('With param {name} bound to {value}', [
+				$this->logger->debug('Param "{name}" bound to <{value}>', [
 					'name' => $k,
 					'value' => is_object($v) ? (string)$v : $v
 				]);
@@ -120,7 +120,9 @@ class PreparedStatement extends \PDOStatement
 					$info .= sprintf(' [%s -> %s] %s', $row['possible_keys'], $row['key'], $row['ref']);
 					$info .= sprintf(' %u rows %s', $row['rows'], $row['Extra']);
 					
-					$this->logger->info('Explain: ' . $info);
+					$this->logger->debug('Explain: <info>', [
+						'info' => $info
+					]);
 				}
 			}
 			
@@ -128,7 +130,7 @@ class PreparedStatement extends \PDOStatement
 			$result = parent::execute($params);
 			$time = microtime(true) - $start;
 			
-			$this->logger->info('QUERY TIME: {time} ms', [
+			$this->logger->info('Execution time: {time} ms', [
 				'time' => ceil($time / 1000)
 			]);
 			

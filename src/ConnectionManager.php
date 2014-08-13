@@ -63,13 +63,22 @@ class ConnectionManager implements ConnectionManagerInterface
 			return $this->getConnection($config->getString('alias'));
 		}
 		
+		$dsn = $config->getString('dsn');
+		
 		if($this->manager !== NULL && $config->getBoolean('managed', true))
 		{
-			$pdo = new ManagedConnection($this->manager, $config->getString('dsn'), $config->get('username', NULL), $config->get('password', NULL));
+			$pdo = new ManagedConnection($this->manager, $dsn, $config->get('username', NULL), $config->get('password', NULL));
 		}
 		else
 		{
-			$pdo = new Connection($config->getString('dsn'), $config->get('username', NULL), $config->get('password', NULL));
+			$pdo = new Connection($dsn, $config->get('username', NULL), $config->get('password', NULL));
+		}
+		
+		if($this->logger !== NULL)
+		{
+			$this->logger->info('Established database connection <{dsn}>', [
+				'dsn' => $dsn
+			]);
 		}
 		
 		$pdo->setLogger($this->logger);
