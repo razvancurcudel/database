@@ -53,7 +53,7 @@ class Connection extends \PDO
 		return $this->logger;
 	}
 	
-	public function setLogger(LoggerInterface $logger)
+	public function setLogger(LoggerInterface $logger = NULL)
 	{
 		$this->logger = $logger;
 	}
