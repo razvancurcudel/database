@@ -60,9 +60,20 @@ class Connection extends \PDO
 		$this->logger = $logger;
 	}
 	
-	public function registerEncoder(ParamEncoderInterface $encoder)
+	public function registerParamEncoder(ParamEncoderInterface $encoder)
 	{
-		$this->encoders[] = $encoder;
+		if(!in_array($encoder, $this->encoders, true))
+		{
+			$this->encoders[] = $encoder;
+		}
+	}
+	
+	public function unregisterParamEncoder(ParamEncoderInterface $encoder)
+	{
+		if(false !== ($index = array_search($encoder, $this->encoders, true)))
+		{
+			unset($this->encoders[$index]);
+		}
 	}
 	
 	public function isDebug()
