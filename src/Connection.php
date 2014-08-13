@@ -276,7 +276,7 @@ class Connection extends \PDO
 	
 		foreach($this->encoders as $encoder)
 		{
-			$result = $encoder->encodeParam($this, $v, $done);
+			$result = $encoder->encodeParam($this, $value, $done);
 				
 			if($done)
 			{
