@@ -57,6 +57,8 @@ class PreparedStatement extends \PDOStatement
 	
 	public function bindValue($parameter, $value, $type = NULL)
 	{		
+		$value = $this->conn->encodeParam($value, $type);
+		
 		$this->boundParams[$parameter] = $value;
 		
 		if($type === NULL)
@@ -69,6 +71,14 @@ class PreparedStatement extends \PDOStatement
 		
 	public function execute($params = NULL)
 	{
+		if(is_array($params))
+		{
+			foreach($params as $k => $v)
+			{
+				$params[$k] = $this->conn->encodeParam($v);
+			}
+		}
+		
 		if($this->logger !== NULL && $this->conn->isDebug() && !preg_match("'^\s*(?:EXPLAIN|SELECT)\s+'i", $this->queryString))
 		{
 			$input = array_merge($this->boundParams, (array)$params);

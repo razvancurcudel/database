@@ -32,6 +32,8 @@ class Connection extends \PDO
 	
 	protected $logger;
 	
+	protected $encoders = [];
+	
 	public function __construct($dsn, $username = NULL, $password = NULL, array $options = [])
 	{
 		$options[self::ATTR_STATEMENT_CLASS] = [static::getStatementClass(), [$this]];
@@ -56,6 +58,11 @@ class Connection extends \PDO
 	public function setLogger(LoggerInterface $logger = NULL)
 	{
 		$this->logger = $logger;
+	}
+	
+	public function registerEncoder(ParamEncoderInterface $encoder)
+	{
+		$this->encoders[] = $encoder;
 	}
 	
 	public function isDebug()
@@ -252,13 +259,43 @@ class Connection extends \PDO
 		return $stmt;
 	}
 	
+	public function encodeParam($value, $type = NULL)
+	{
+		$done = false;
+	
+		foreach($this->encoders as $encoder)
+		{
+			$result = $encoder->encodeParam($this, $v, $done);
+				
+			if($done)
+			{
+				return $result;
+			}
+		}
+		
+		return $value;
+	}
+	
 	public function quote($v, $type = NULL)
 	{
-		if($v instanceof \DateTime)
+		$done = false;
+		
+		foreach($this->encoders as $encoder)
 		{
-			$v = $v->getTimestamp();
+			$result = $encoder->encodeParam($this, $v, $done);
+			
+			if($done)
+			{
+				if($type === NULL)
+				{
+					return parent::quote($result);
+				}
+				
+				return parent::query($result, $type);
+			}
 		}
-		elseif(is_bool($v))
+		
+		if(is_bool($v))
 		{
 			$v = $v ? 1 : 0;
 		}
