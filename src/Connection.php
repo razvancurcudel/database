@@ -78,6 +78,11 @@ class Connection extends \PDO
 		return $this->driverName == 'sqlite';
 	}
 	
+	public function isPostgreSQL()
+	{
+		return $this->driverName == 'pgsql';
+	}
+	
 	public function setTablePrefix($tablePrefix)
 	{
 		$this->tablePrefix = trim($tablePrefix);
