@@ -48,7 +48,7 @@ class LargeObjectStream extends ResourceStream
 				throw new \RuntimeException('Unable to open temp stream');
 			}
 			
-			fwrite($fp, (string)$string);
+			fwrite($fp, (string)$resource);
 			rewind($fp);
 			
 			parent::__construct($fp);
