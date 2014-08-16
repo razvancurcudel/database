@@ -52,6 +52,14 @@ class Connection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getDriverName()
+	{
+		return $this->driverName;
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function inTransaction()
 	{
 		return $this->pdo->inTransaction();
@@ -186,6 +194,16 @@ class Connection implements ConnectionInterface
 			default:
 				throw new \RuntimeException(sprintf('Database driver "%s" does not support nested transactions', $this->driverName));
 		}
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function execute($sql)
+	{
+		$stmt = $this->prepare($sql);
+		
+		return $stmt->execute();
 	}
 	
 	/**

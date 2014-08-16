@@ -19,6 +19,13 @@ namespace KoolKode\Database;
 interface ConnectionInterface
 {
 	/**
+	 * Get the database driver name, one of DB::DRIVER_*.
+	 * 
+	 * @return string
+	 */
+	public function getDriverName();
+	
+	/**
 	 * Check if a transaction is active.
 	 * 
 	 * @return boolean
@@ -45,6 +52,15 @@ interface ConnectionInterface
 	 * @return ConnectionInterface
 	 */
 	public function rollBack();
+	
+	/**
+	 * Execute the given SQL query and return the number of affected rows (only available when
+	 * executing INSERT, UPDATE, DELETE and similar statements).
+	 * 
+	 * @param string $sql
+	 * @return integer
+	 */
+	public function execute($sql);
 	
 	/**
 	 * Create a prepared statement from the given SQL query.

@@ -53,6 +53,14 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getDriverName()
+	{
+		return $this->conn->getDriverName();
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function inTransaction()
 	{
 		return $this->conn->inTransaction();
@@ -86,6 +94,14 @@ abstract class ConnectionDecorator implements ConnectionInterface
 		$this->conn->rollBack();
 		
 		return $this;
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function execute($sql)
+	{
+		return $this->conn->execute($sql);
 	}
 	
 	/**

@@ -130,7 +130,9 @@ class Statement implements StatementInterface
 			}
 		}
 		
+		$start = microtime(true);
 		$this->stmt->execute();
+		$time = microtime(true) - $start;
 		
 		return (int)$this->stmt->rowCount();
 	}

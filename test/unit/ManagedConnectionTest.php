@@ -11,10 +11,11 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Database\Test\DatabaseTestCase;
 use KoolKode\Transaction\TransactionInterface;
 use KoolKode\Transaction\TransactionManager;
 
-class ManagedConnectionTest extends \PHPUnit_Framework_TestCase
+class ManagedConnectionTest extends DatabaseTestCase
 {
 	protected $logger;
 	
