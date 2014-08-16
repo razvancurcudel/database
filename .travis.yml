@@ -6,14 +6,23 @@ php:
   - hhvm
   - hhvm-nightly
 
+env:
+  - 'DB=sqlite DB_DSN="sqlite::memory:"'
+  - 'DB=mysql DB_DSN="mysql:host=localhost;dbname=test" DB_USERNAME=root'
+#  - 'DB=pgsql DB_DSN="pgsql:host=localhost;dbname=test" DB_USERNAME=postgres'
+
 before_install:
   - 'composer selfupdate --no-interaction'
 
 install:
   - 'composer install --no-interaction --dev --prefer-source'
+  
+before_script:
+  - 'if [[ "$DB" == "mysql" ]]; then mysql -e "CREATE DATABASE test;" -uroot; fi'
+  - 'if [[ "$DB" == "pgsql" ]]; then psql -c "CREATE DATABASE test WITH ENCODING = ''UTF8'';" -U postgres; fi'
 
 script:
-  - './vendor/bin/phpunit -c "./test/phpunit.xml" --testsuite "unit" --coverage-text'
+  - './vendor/bin/phpunit -c "./test/phpunit.xml" --coverage-text'
 
 notifications:
   email: false
@@ -22,3 +31,8 @@ matrix:
   allow_failures:
     - php: hhvm
     - php: hhvm-nightly
+#  exclude:
+#    - php: hhvm
+#      env: 'DB=pgsql DB_DSN="pgsql:host=localhost;dbname=test" DB_USERNAME=postgres'
+#    - php: hhvm-nightly
+#      env: 'DB=pgsql DB_DSN="pgsql:host=localhost;dbname=test" DB_USERNAME=postgres'
