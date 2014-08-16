@@ -20,6 +20,8 @@ use Psr\Log\LoggerInterface;
  */
 class Connection extends \PDO
 {
+	use ParamEncoderTrait;
+	
 	const TABLE_PREFIX = '#__';
 	
 	protected $debug = false;
@@ -31,8 +33,6 @@ class Connection extends \PDO
 	protected $transLevel = 0;
 	
 	protected $logger;
-	
-	protected $encoders = [];
 	
 	public function __construct($dsn, $username = NULL, $password = NULL, array $options = [])
 	{
@@ -58,22 +58,6 @@ class Connection extends \PDO
 	public function setLogger(LoggerInterface $logger = NULL)
 	{
 		$this->logger = $logger;
-	}
-	
-	public function registerParamEncoder(ParamEncoderInterface $encoder)
-	{
-		if(!in_array($encoder, $this->encoders, true))
-		{
-			$this->encoders[] = $encoder;
-		}
-	}
-	
-	public function unregisterParamEncoder(ParamEncoderInterface $encoder)
-	{
-		if(false !== ($index = array_search($encoder, $this->encoders, true)))
-		{
-			unset($this->encoders[$index]);
-		}
 	}
 	
 	public function isDebug()
@@ -267,31 +251,19 @@ class Connection extends \PDO
 		
 		$stmt->setFetchMode(self::FETCH_ASSOC);
 		
-		return $stmt;
-	}
-	
-	public function encodeParam($value, $type = NULL)
-	{
-		$done = false;
-	
-		foreach($this->encoders as $encoder)
+		foreach($this->paramEncoders as $encoder)
 		{
-			$result = $encoder->encodeParam($this, $value, $done);
-				
-			if($done)
-			{
-				return $result;
-			}
+			$stmt->registerParamEncoder($encoder);
 		}
 		
-		return $value;
+		return $stmt;
 	}
 	
 	public function quote($v, $type = NULL)
 	{
 		$done = false;
 		
-		foreach($this->encoders as $encoder)
+		foreach($this->paramEncoders as $encoder)
 		{
 			$result = $encoder->encodeParam($this, $v, $done);
 			

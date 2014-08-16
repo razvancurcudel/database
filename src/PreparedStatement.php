@@ -18,6 +18,8 @@ namespace KoolKode\Database;
  */
 class PreparedStatement extends \PDOStatement
 {
+	use ParamEncoderTrait;
+	
 	protected $conn;
 	protected $logger;
 	
@@ -27,9 +29,11 @@ class PreparedStatement extends \PDOStatement
 	protected $transforms = [];
 	protected $computedColumns = [];
 	
-	protected function __construct(Connection $conn)
+	protected function __construct(Connection $conn, array $paramEncoders = [])
 	{
 		$this->conn = $conn;
+		$this->paramEncoders = $paramEncoders;
+		
 		$this->logger = $conn->getLogger();
 	}
 	
@@ -57,7 +61,7 @@ class PreparedStatement extends \PDOStatement
 	
 	public function bindValue($parameter, $value, $type = NULL)
 	{		
-		$value = $this->conn->encodeParam($value, $type);
+		$value = $this->encodeParam($value, $type);
 		
 		$this->boundParams[$parameter] = $value;
 		
@@ -75,7 +79,7 @@ class PreparedStatement extends \PDOStatement
 		{
 			foreach($params as $k => $v)
 			{
-				$params[$k] = $this->conn->encodeParam($v);
+				$params[$k] = $this->encodeParam($v);
 			}
 		}
 		

@@ -18,9 +18,9 @@ namespace KoolKode\Database;
  */
 class ManagedStatement extends PreparedStatement
 {
-	protected function __construct(ManagedConnection $conn)
+	protected function __construct(ManagedConnection $conn, array $paramEncoders = [])
 	{
-		parent::__construct($conn);
+		parent::__construct($conn, $paramEncoders);
 	}
 	
 	public function execute($params = NULL)
