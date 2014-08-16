@@ -22,7 +22,7 @@ interface ConnectionManagerInterface
 	 * Get a database connection by configured name.
 	 * 
 	 * @param string $name Name of the connection as configured.
-	 * @return Connection
+	 * @return ConnectionInterface
 	 */
 	public function getConnection($name);
 }

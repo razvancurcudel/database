@@ -9,6 +9,8 @@
 * file that was distributed with this source code.
 */
 
+// FIXME: Need to adapt this class to new database API.
+
 namespace KoolKode\Database;
 
 use KoolKode\Config\Configuration;

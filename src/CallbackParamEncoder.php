@@ -28,7 +28,7 @@ class CallbackParamEncoder implements ParamEncoderInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function encodeParam(Connection $conn, $param, & $isEncoded)
+	public function encodeParam(ConnectionInterface $conn, $param, & $isEncoded)
 	{
 		return call_user_func($this->callback, $conn, $param, $isEncoded);
 	}
