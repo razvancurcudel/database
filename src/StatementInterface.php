@@ -70,6 +70,22 @@ interface StatementInterface
 	public function execute();
 	
 	/**
+	 * Close the database cursor processing the query result, this allows for other queries to be executed
+	 * by the database connection.
+	 * 
+	 * @return StatementInterface
+	 */
+	public function closeCursor();
+	
+	/**
+	 * Register a param encoder with this statement.
+	 * 
+	 * @param ParamEncoderInterface $encoder
+	 * @return StatementInterface
+	 */
+	public function registerParamEncoder(ParamEncoderInterface $encoder);
+	
+	/**
 	 * Transforms a column value using a custom transformation.
 	 * 
 	 * @param mixed $column
@@ -90,9 +106,10 @@ interface StatementInterface
 	/**
 	 * Fetches the next row from the query result.
 	 * 
+	 * @param mixed $style Fetch style, one of the DB::FETCH_* constants.
 	 * @return array or false when no more rows are available.
 	 */
-	public function fetchNextRow();
+	public function fetchNextRow($style = NULL);
 	
 	/**
 	 * Fetches the next value of the specified colum from the query result.
@@ -105,9 +122,10 @@ interface StatementInterface
 	/**
 	 * Fetch all remaining rows from the query result.
 	 * 
+	 * @param mixed $style Fetch style, one of the DB::FETCH_* constants.
 	 * @return array<array> Array of all remaining rows (may be empty when no more rows are available).
 	 */
-	public function fetchRows();
+	public function fetchRows($style = NULL);
 	
 	/**
 	 * Fetch all remaining values of the specified column from the query result.

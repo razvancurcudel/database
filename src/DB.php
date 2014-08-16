@@ -18,15 +18,23 @@ namespace KoolKode\Database;
  */
 abstract class DB
 {
+	const OBJECT_NAME_PREFIX = '#__';
+	
 	const DRIVER_SQLITE = 'sqlite';
 	
 	const DRIVER_MYSQL = 'mysql';
 	
 	const DRIVER_POSTGRESQL = 'pgsql';
 	
-	const DRIVER_DB2 = 'ibm';
+	const DRIVER_DB2 = 'db2';
 	
 	const DRIVER_MSSQL = 'mssql';
 	
 	const DRIVER_ORACLE = 'oci';
+	
+	const FETCH_BOTH = 0;
+	
+	const FETCH_ASSOC = 1;
+	
+	const FETCH_NUM = 2;
 }
