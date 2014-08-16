@@ -36,6 +36,21 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	}
 	
 	/**
+	 * Get the actual connection being decorated (works even in cas eof nested decorators).
+	 * 
+	 * @return ConnectionInterface
+	 */
+	public function getConnection()
+	{
+		if($this->conn instanceof ConnectionDecorator)
+		{
+			return $this->conn->getConnection();
+		}
+		
+		return $this->conn;
+	}
+	
+	/**
 	 * {@inheritdoc}
 	 */
 	public function inTransaction()

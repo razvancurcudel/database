@@ -15,6 +15,11 @@ use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\DB;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Adapts a wrapped PDO connection to the KoolKode Database API.
+ * 
+ * @author Martin Schröder
+ */
 class Connection implements ConnectionInterface
 {
 	protected $pdo;

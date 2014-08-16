@@ -17,6 +17,11 @@ use KoolKode\Database\ParamEncoderInterface;
 use KoolKode\Database\PlaceholderList;
 use KoolKode\Database\StatementInterface;
 
+/**
+ * Adapts a wrapped PDO statement to the KoolKode Database API.
+ * 
+ * @author Martin Schröder
+ */
 class Statement implements StatementInterface
 {
 	protected $conn;
