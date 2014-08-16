@@ -60,7 +60,12 @@ class PreparedStatement extends \PDOStatement
 	}
 	
 	public function bindValue($parameter, $value, $type = NULL)
-	{		
+	{
+		if($value instanceof LargeObjectStream)
+		{
+			return parent::bindValue($parameter, $value->getResource(), \PDO::PARAM_LOB);
+		}
+		
 		$value = $this->encodeParam($value, $type);
 		
 		$this->boundParams[$parameter] = $value;
