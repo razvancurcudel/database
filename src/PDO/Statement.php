@@ -156,6 +156,18 @@ class Statement implements StatementInterface
 					case DB::DRIVER_CUBRID:
 						$sql .= sprintf(' LIMIT %u, %u', $this->offset, $this->limit);
 						break;
+					case DB::DRIVER_MSSQL:
+						if($this->offset === 0)
+						{
+							$sql = preg_replace_callback("'(?:^|\W)SELECT\W'i", function(array $m) {
+								return $m[0] . sprintf(' TOP %u ', $this->limit);
+							}, $sql, 1);
+						}
+						else
+						{
+							throw new \RuntimeException('Limit + offset not implemented yet in MSSQL driver');
+						}
+						break;
 					case DB::DRIVER_ORACLE:
 						
 						$num = 0;
@@ -239,7 +251,7 @@ class Statement implements StatementInterface
 	 */
 	public function closeCursor()
 	{
-		while(true)
+		while($this->stmt !== NULL)
 		{
 			$this->stmt->closeCursor();
 			
@@ -295,6 +307,11 @@ class Statement implements StatementInterface
 	 */
 	public function fetchNextRow($style = NULL)
 	{
+		if($this->stmt === NULL)
+		{
+			return false;
+		}
+		
 		switch($style)
 		{
 			case DB::FETCH_ASSOC:
@@ -316,6 +333,11 @@ class Statement implements StatementInterface
 	 */
 	public function fetchNextColumn($column)
 	{
+		if($this->stmt === NULL)
+		{
+			return false;
+		}
+		
 		$transform = (!empty($this->computed[$column]) || !empty($this->transformed[$column]));
 		
 		if(!$transform && is_integer($column))
@@ -353,6 +375,11 @@ class Statement implements StatementInterface
 	 */
 	public function fetchRows($style = NULL)
 	{
+		if($this->stmt === NULL)
+		{
+			return [];
+		}
+		
 		switch($style)
 		{
 			case DB::FETCH_ASSOC:
@@ -386,6 +413,11 @@ class Statement implements StatementInterface
 	 */
 	public function fetchColumns($column)
 	{
+		if($this->stmt === NULL)
+		{
+			return [];
+		}
+		
 		$transform = (!empty($this->computed[$column]) || !empty($this->transformed[$column]));
 		
 		if(!$transform && is_integer($column))
@@ -421,6 +453,11 @@ class Statement implements StatementInterface
 	 */
 	public function fetchMap($key, $value)
 	{
+		if($this->stmt === NULL)
+		{
+			return [];
+		}
+		
 		if(is_integer($key) && is_integer($value))
 		{
 			$style = \PDO::FETCH_NUM;
