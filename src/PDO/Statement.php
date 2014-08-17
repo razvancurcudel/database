@@ -111,7 +111,7 @@ class Statement implements StatementInterface
 		
 		$this->limit = $limit;
 		
-		return $thi;
+		return $this;
 	}
 	
 	/**
