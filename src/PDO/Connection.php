@@ -79,6 +79,25 @@ class Connection implements ConnectionInterface
 	}
 	
 	/**
+	 * Get the server software version.
+	 * 
+	 * @return string
+	 */
+	public function getServerVersion()
+	{
+		try
+		{
+			$version = $this->pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
+		}
+		catch(\PDOException $e)
+		{
+			return NULL;
+		}
+		
+		return $version;
+	}
+	
+	/**
 	 * {@inheritdoc}
 	 */
 	public function beginTransaction()

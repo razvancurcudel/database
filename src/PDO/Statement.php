@@ -101,7 +101,15 @@ class Statement implements StatementInterface
 	 */
 	public function setLimit($limit)
 	{
-		$this->limit = (int)$limit;
+		$limit = (int)$limit;
+		
+		if($limit !== $this->limit)
+		{
+			$this->closeCursor();
+			$this->stmt = NULL;
+		}
+		
+		$this->limit = $limit;
 		
 		return $thi;
 	}
@@ -111,7 +119,15 @@ class Statement implements StatementInterface
 	 */
 	public function setOffset($offset)
 	{
-		$this->offset = (int)$offset;
+		$offset = (int)$offset;
+		
+		if($offset !== $this->offset)
+		{
+			$this->closeCursor();
+			$this->stmt = NULL;
+		}
+		
+		$this->offset = $offset;
 		
 		return $this;
 	}
@@ -123,16 +139,66 @@ class Statement implements StatementInterface
 	{
 		if($this->stmt === NULL)
 		{
-			$this->stmt = $this->conn->getPDO()->prepare($this->sql);
+			$sql = $this->sql;
+			
+			if($this->limit > 0)
+			{
+				// TODO: Need more specific limit / offset support especially related to SQL 2008 standard.
+				$version = $this->conn->getServerVersion();
+				
+				switch($this->conn->getDriverName())
+				{
+					case DB::DRIVER_SQLITE:
+					case DB::DRIVER_MYSQL:
+					case DB::DRIVER_POSTGRESQL:
+						$sql .= sprintf(' LIMIT %u OFFSET %u', $this->limit, $this->offset);
+						break;
+					case DB::DRIVER_CUBRID:
+						$sql .= sprintf(' LIMIT %u, %u', $this->offset, $this->limit);
+						break;
+					case DB::DRIVER_ORACLE:
+						
+						$num = 0;
+						
+						if(preg_match("'([0-9]+)[cg]'i", $version, $m))
+						{
+							$num = (int)$m[1];
+						}
+						if($num >= 12)
+						{
+							$sql .= sprintf(' OFFSET %u ROWS FETCH NEXT %u ROWS ONLY', $this->offset, $this->limit);
+						}
+						else
+						{
+							$sql = sprintf(
+								'SELECT * FROM (SELECT kklq.*, ROWNUM kkrn FROM (' . $sql . ') kklq WHERE ROWNUM <= %u) WHERE kkrn > %u',
+								$this->offset + $this->limit,
+								$this->limit
+							);
+						}
+						
+						break;
+					case DB::DRIVER_DB2:
+						if($this->offset === 0)
+						{
+							$sql .= sprintf(' FETCH FIRST %u ROWS ONLY', $this->limit);
+						}
+						else
+						{
+							throw new \RuntimeException(sprintf('Limit + offset query not implemented for DB2'));
+						}
+						break;
+					default:
+						throw new \RuntimeException(sprintf('Limit / Ofsset support not implemented for driver "%s"', $this->conn->getDriverName()));
+				}
+			}
+			
+			$this->stmt = $this->conn->getPDO()->prepare($sql);
 			$this->stmt->setFetchMode(\PDO::FETCH_ASSOC);
 		}
 		else
 		{
-			do
-			{
-				$this->stmt->closeCursor();
-			}
-			while($this->stmt->nextRowset());
+			$this->closeCursor();
 		}
 		
 		foreach($this->params as $k => $v)
@@ -173,11 +239,21 @@ class Statement implements StatementInterface
 	 */
 	public function closeCursor()
 	{
-		do
+		while(true)
 		{
 			$this->stmt->closeCursor();
+			
+			try
+			{
+				if($this->stmt->nextRowset())
+				{
+					continue;
+				}
+			}
+			catch(\Exception $e) { }
+			
+			break;
 		}
-		while($this->stmt->nextRowset());
 		
 		return $this;
 	}

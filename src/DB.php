@@ -32,6 +32,8 @@ abstract class DB
 	
 	const DRIVER_ORACLE = 'oci';
 	
+	const DRIVER_CUBRID = 'cubrid';
+	
 	const FETCH_BOTH = 0;
 	
 	const FETCH_ASSOC = 1;
