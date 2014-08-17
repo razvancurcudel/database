@@ -24,8 +24,25 @@ use KoolKode\Database\StatementInterface;
  */
 class Statement implements StatementInterface
 {
+	/**
+	 * The database connection instance.
+	 * 
+	 * @var Connection
+	 */
 	protected $conn;
 	
+	/**
+	 * The SQL query string without database-specific LIMIT / OFFSET clause.
+	 * 
+	 * @var string
+	 */
+	protected $sql;
+	
+	/**
+	 * The wrapped PDO statement.
+	 * 
+	 * @var \PDOStatement
+	 */
 	protected $stmt;
 	
 	protected $limit = 0;
@@ -42,10 +59,10 @@ class Statement implements StatementInterface
 	
 	protected $computed = [];
 	
-	public function __construct(Connection $conn, \PDOStatement $stmt)
+	public function __construct(Connection $conn, $sql)
 	{
 		$this->conn = $conn;
-		$this->stmt = $stmt;
+		$this->sql = (string)$sql;
 	}
 	
 	/**
@@ -104,6 +121,20 @@ class Statement implements StatementInterface
 	 */
 	public function execute()
 	{
+		if($this->stmt === NULL)
+		{
+			$this->stmt = $this->conn->getPDO()->prepare($this->sql);
+			$this->stmt->setFetchMode(\PDO::FETCH_ASSOC);
+		}
+		else
+		{
+			do
+			{
+				$this->stmt->closeCursor();
+			}
+			while($this->stmt->nextRowset());
+		}
+		
 		foreach($this->params as $k => $v)
 		{
 			$encoded = false;

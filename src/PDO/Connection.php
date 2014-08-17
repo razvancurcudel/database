@@ -22,6 +22,11 @@ use Psr\Log\LoggerInterface;
  */
 class Connection implements ConnectionInterface
 {
+	/**
+	 * The wrapped PDO instance.
+	 * 
+	 * @var \PDO
+	 */
 	protected $pdo;
 	
 	protected $transLevel = 0;
@@ -40,6 +45,14 @@ class Connection implements ConnectionInterface
 		$this->tablePrefix = (string)$tablePrefix;
 		
 		$this->driverName = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+	}
+	
+	/**
+	 * @return \PDO
+	 */
+	public function getPDO()
+	{
+		return $this->pdo;
 	}
 	
 	public function setLogger(LoggerInterface $logger)
@@ -201,9 +214,7 @@ class Connection implements ConnectionInterface
 	 */
 	public function execute($sql)
 	{
-		$stmt = $this->prepare($sql);
-		
-		return $stmt->execute();
+		return $this->prepare($sql)->execute();
 	}
 	
 	/**
@@ -217,10 +228,7 @@ class Connection implements ConnectionInterface
 			return $this->quoteIdentifier($m[1]);
 		}, $sql);
 		
-		$stmt = $this->pdo->prepare($sql);
-		$stmt->setFetchMode(\PDO::FETCH_ASSOC);
-		
-		return new Statement($this, $stmt);
+		return new Statement($this, $sql);
 	}
 	
 	/**
