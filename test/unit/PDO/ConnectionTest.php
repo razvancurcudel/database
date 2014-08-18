@@ -37,7 +37,7 @@ class ConnectionTest extends DatabaseTestCase
 		$pdo = new \PDO($dsn, $username, $password);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		
-		self::$conn = new PrefixConnectionDecorator(new Connection($pdo), 'test_');
+		self::$conn = new PrefixConnectionDecorator(new Connection($pdo), 'db_');
 		
 		switch(self::$conn->getDriverName())
 		{
