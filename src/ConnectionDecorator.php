@@ -61,6 +61,27 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function hasOption($name)
+	{
+		return $this->conn->hasOption($name);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getOption($name)
+	{
+		if(func_num_args() > 1)
+		{
+			return $this->conn->getOption($name, func_get_arg(1));
+		}
+		
+		return $this->conn->getOption($name);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function inTransaction()
 	{
 		return $this->conn->inTransaction();
@@ -99,25 +120,25 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql)
+	public function execute($sql, $prefix = NULL)
 	{
-		return $this->conn->execute($sql);
+		return $this->conn->execute($sql, $prefix);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql)
+	public function prepare($sql, $prefix = NULL)
 	{
-		return $this->conn->prepare($sql);
+		return $this->conn->prepare($sql, $prefix);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL)
+	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
 	{
-		return $this->conn->lastInsertId($sequenceName);
+		return $this->conn->lastInsertId($sequenceName, $prefix);
 	}
 	
 	/**

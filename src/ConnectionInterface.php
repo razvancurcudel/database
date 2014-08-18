@@ -77,17 +77,19 @@ interface ConnectionInterface
 	 * executing INSERT, UPDATE, DELETE and similar statements).
 	 * 
 	 * @param string $sql
+	 * @param string $prefix
 	 * @return integer
 	 */
-	public function execute($sql);
+	public function execute($sql, $prefix = NULL);
 	
 	/**
 	 * Create a prepared statement from the given SQL query.
 	 * 
 	 * @param string $sql
+	 * @param string $prefix
 	 * @return StatementInterface
 	 */
-	public function prepare($sql);
+	public function prepare($sql, $prefix = NULL);
 	
 	/**
 	 * Get the last inserted ID value from an auto-increment column or a named sequence.
@@ -95,7 +97,7 @@ interface ConnectionInterface
 	 * @param string $sequenceName
 	 * @return integer
 	 */
-	public function lastInsertId($sequenceName = NULL);
+	public function lastInsertId($sequenceName = NULL, $prefix = NULL);
 	
 	/**
 	 * Quote the given name to be used as DB-specific object identifier.

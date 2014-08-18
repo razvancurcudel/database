@@ -13,6 +13,7 @@ namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\DB;
 use KoolKode\Database\Test\DatabaseTestCase;
+use KoolKode\Database\PrefixConnectionDecorator;
 
 class ConnectionTest extends DatabaseTestCase
 {
@@ -36,7 +37,7 @@ class ConnectionTest extends DatabaseTestCase
 		$pdo = new \PDO($dsn, $username, $password);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		
-		self::$conn = new Connection($pdo, 'test_');
+		self::$conn = new PrefixConnectionDecorator(new Connection($pdo), 'test_');
 		
 		switch(self::$conn->getDriverName())
 		{

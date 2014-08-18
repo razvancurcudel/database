@@ -35,14 +35,11 @@ class Connection implements ConnectionInterface
 	
 	protected $driverName;
 	
-	protected $tablePrefix;
-	
 	protected $options = [];
 	
-	public function __construct(\PDO $pdo, $tablePrefix = '', array $options = [])
+	public function __construct(\PDO $pdo, array $options = [])
 	{
 		$this->pdo = $pdo;
-		$this->tablePrefix = (string)$tablePrefix;
 		$this->options = $options;
 
 		$this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -259,18 +256,18 @@ class Connection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql)
+	public function execute($sql, $prefix = NULL)
 	{
-		return $this->prepare($sql)->execute();
+		return $this->prepare($sql, $prefix)->execute();
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql)
+	public function prepare($sql, $prefix = NULL)
 	{
 		$sql = trim(preg_replace("'\s+'", ' ', $sql));
-		$sql = str_replace(DB::OBJECT_NAME_PREFIX, $this->tablePrefix, $sql);
+		$sql = str_replace(DB::OBJECT_NAME_PREFIX, ($prefix === NULL) ? '' : $prefix, $sql);
 		$sql = preg_replace_callback("'`([^`]*)`'", function($m) {
 			return $this->quoteIdentifier($m[1]);
 		}, $sql);
@@ -281,7 +278,7 @@ class Connection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL)
+	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
 	{
 		if($this->driverName == DB::DRIVER_MSSQL)
 		{
@@ -296,7 +293,12 @@ class Connection implements ConnectionInterface
 			return $this->pdo->lastInsertId();
 		}
 		
-		return $this->pdo->lastInsertId($sequenceName);
+		$seq = str_replace(DB::OBJECT_NAME_PREFIX, ($prefix === NULL) ? '' : $prefix, $sequenceName);
+		$seq = preg_replace_callback("'`([^`]*)`'", function($m) {
+			return $this->quoteIdentifier($m[1]);
+		}, $seq);
+		
+		return $this->pdo->lastInsertId($seq);
 	}
 	
 	/**
