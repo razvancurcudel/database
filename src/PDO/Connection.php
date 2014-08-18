@@ -267,7 +267,7 @@ class Connection implements ConnectionInterface
 	public function prepare($sql, $prefix = NULL)
 	{
 		$sql = trim(preg_replace("'\s+'", ' ', $sql));
-		$sql = str_replace(DB::OBJECT_NAME_PREFIX, ($prefix === NULL) ? '' : $prefix, $sql);
+		$sql = str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $sql);
 		$sql = preg_replace_callback("'`([^`]*)`'", function($m) {
 			return $this->quoteIdentifier($m[1]);
 		}, $sql);
@@ -293,7 +293,7 @@ class Connection implements ConnectionInterface
 			return $this->pdo->lastInsertId();
 		}
 		
-		$seq = str_replace(DB::OBJECT_NAME_PREFIX, ($prefix === NULL) ? '' : $prefix, $sequenceName);
+		$seq = str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $sequenceName);
 		$seq = preg_replace_callback("'`([^`]*)`'", function($m) {
 			return $this->quoteIdentifier($m[1]);
 		}, $seq);

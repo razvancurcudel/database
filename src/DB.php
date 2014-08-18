@@ -18,7 +18,7 @@ namespace KoolKode\Database;
  */
 abstract class DB
 {
-	const OBJECT_NAME_PREFIX = '#__';
+	const SCHEMA_OBJECT_PREFIX = '#__';
 	
 	const DRIVER_SQLITE = 'sqlite';
 	

@@ -53,4 +53,12 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	{
 		return $this->conn->prepare($sql, ($prefix === NULL) ? $this->prefix : $prefix);
 	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
+	{
+		return $this->conn->lastInsertId($sequenceName, ($prefix === NULL) ? $this->prefix : $prefix);
+	}
 }
