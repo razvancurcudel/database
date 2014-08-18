@@ -34,6 +34,18 @@ abstract class DB
 	
 	const DRIVER_CUBRID = 'cubrid';
 	
+	/**
+	 * Boolean option that indicates LIMIT / OFFSET support in IBM DB2 9.7+.
+	 * 
+	 * This requires the database to enable <code>DB2_COMPATIBILITY_VECTOR=4000</code> (every single bit can
+	 * be OR-ed together during creation of the vector).
+	 * 
+	 * @link https://www.ibm.com/developerworks/community/blogs/SQLTips4DB2LUW/entry/limit_offset?lang=en
+	 * 
+	 * @var string
+	 */
+	const OPTION_DB2_LIMIT_OFFSET = 'db2_limit_offset';
+	
 	const FETCH_BOTH = 0;
 	
 	const FETCH_ASSOC = 1;

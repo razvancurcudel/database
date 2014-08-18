@@ -195,6 +195,10 @@ class Statement implements StatementInterface
 						{
 							$sql .= sprintf(' FETCH FIRST %u ROWS ONLY', $this->limit);
 						}
+						elseif($this->conn->getOption(DB::OPTION_DB2_LIMIT_OFFSET, false))
+						{
+							$sql .= sprintf(' LIMIT %u OFFSET %u', $this->limit, $this->offset);
+						}
 						else
 						{
 							throw new \RuntimeException(sprintf('Limit + offset query not implemented for DB2'));

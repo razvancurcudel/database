@@ -26,6 +26,25 @@ interface ConnectionInterface
 	public function getDriverName();
 	
 	/**
+	 * Check if the given option is available on the connection.
+	 *
+	 * @param string $name
+	 * @return boolean
+	 */
+	public function hasOption($name);
+	
+	/**
+	 * Get the value of the given option.
+	 *
+	 * @param string $name Name of th option.
+	 * @param mixed $default Default value to be used
+	 * @return mixed
+	 *
+	 * @throws \OutOfBoundsException When the requested option is not available and no default value is given.
+	 */
+	public function getOption($name);
+	
+	/**
 	 * Check if a transaction is active.
 	 * 
 	 * @return boolean

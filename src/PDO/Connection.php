@@ -37,14 +37,42 @@ class Connection implements ConnectionInterface
 	
 	protected $tablePrefix;
 	
-	public function __construct(\PDO $pdo, $tablePrefix = '')
+	protected $options = [];
+	
+	public function __construct(\PDO $pdo, $tablePrefix = '', array $options = [])
 	{
-		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-		
 		$this->pdo = $pdo;
 		$this->tablePrefix = (string)$tablePrefix;
-		
+		$this->options = $options;
+
+		$this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		$this->driverName = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function hasOption($name)
+	{
+		return array_key_exists($name, $this->options);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getOption($name)
+	{
+		if(array_key_exists($name, $this->options))
+		{
+			return $this->options[$name];
+		}
+		
+		if(func_num_args() > 1)
+		{
+			return func_get_arg(1);
+		}
+		
+		throw new \OutOfBoundsException(sprintf('Option "%s" is not available', $name));
 	}
 	
 	/**
