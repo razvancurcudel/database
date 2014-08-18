@@ -18,14 +18,19 @@ namespace KoolKode\Database;
  */
 class ParamEncoderDecorator extends ConnectionDecorator
 {
+	/**
+	 * Registered param encoders.
+	 * 
+	 * @var array<ParamEncoderInterface>
+	 */
 	protected $encoders = [];
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql)
+	public function prepare($sql, $prefix = NULL)
 	{
-		$stmt = $this->conn->prepare($sql);
+		$stmt = $this->conn->prepare($sql, $prefix);
 		
 		foreach($this->encoders as $encoder)
 		{
@@ -35,6 +40,12 @@ class ParamEncoderDecorator extends ConnectionDecorator
 		return $stmt;
 	}
 		
+	/**
+	 * Register a new param encoder if it's not registered yet.
+	 * 
+	 * @param ParamEncoderInterface $encoder
+	 * @return ParamEncoderDecorator
+	 */
 	public function registerParamEncoder(ParamEncoderInterface $encoder)
 	{
 		if(!in_array($encoder, $this->encoders, true))
@@ -45,6 +56,12 @@ class ParamEncoderDecorator extends ConnectionDecorator
 		return $this;
 	}
 	
+	/**
+	 * Unregister a param encoder if it has already been registered.
+	 * 
+	 * @param ParamEncoderInterface $encoder
+	 * @return ParamEncoderDecorator
+	 */
 	public function unregisterParamEncoder(ParamEncoderInterface $encoder)
 	{
 		if(false !== ($index = array_search($encoder, $this->encoders, true)))
