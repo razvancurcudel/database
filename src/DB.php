@@ -35,6 +35,22 @@ abstract class DB
 	const DRIVER_CUBRID = 'cubrid';
 	
 	/**
+	 * String option indicating DB encoding / character set to be used.
+	 * 
+	 * Connection will attempt to use UTF-8 by default.
+	 * 
+	 * @var string
+	 */
+	const OPTION_ENCODING = 'encoding';
+	
+	/**
+	 * String option indicating a timezone name (or offset) for datetime types that do not store timezone info.
+	 * 
+	 * @var string
+	 */
+	const OPTION_TIMEZONE = 'timezone';
+	
+	/**
 	 * Boolean option that indicates LIMIT / OFFSET support in IBM DB2 9.7+.
 	 * 
 	 * This requires the database to enable <code>DB2_COMPATIBILITY_VECTOR=4000</code> (every single bit can

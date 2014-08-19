@@ -1,0 +1,13 @@
+
+adapter:
+  default:
+    dsn: '%dsn%'
+    username: '%username%'
+    password: '%password%'
+    options:
+      encoding: 'UTF-8'
+      timezone: 'UTC'
+connection:
+  default:
+    adapter: default
+    prefix: 'test_'

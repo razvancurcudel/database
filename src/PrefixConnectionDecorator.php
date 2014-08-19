@@ -39,6 +39,16 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	}
 	
 	/**
+	 * Get the schema object prefix being applied.
+	 * 
+	 * @return string
+	 */
+	public function getPrefix()
+	{
+		return $this->prefix;
+	}
+	
+	/**
 	 * {@inheritdoc}
 	 */
 	public function execute($sql, $prefix = NULL)

@@ -34,11 +34,11 @@ class ManagedConnection extends Connection implements TransactionResourceInterfa
 	 * 
 	 * @param TransactionManagerInterface $manager
 	 * @param \PDO $pdo
-	 * @param string $tablePrefix
+	 * @param array<string, mixed> $options
 	 */
-	public function __construct(TransactionManagerInterface $manager, \PDO $pdo, $tablePrefix = '')
+	public function __construct(TransactionManagerInterface $manager, \PDO $pdo, array $options = [])
 	{
-		parent::__construct($pdo, $tablePrefix);
+		parent::__construct($pdo, $options);
 		
 		$this->manager = $manager;
 	}

@@ -9,11 +9,11 @@
 * file that was distributed with this source code.
 */
 
-// FIXME: Need to adapt this class to new database API.
-
 namespace KoolKode\Database;
 
 use KoolKode\Config\Configuration;
+use KoolKode\Database\PDO\Connection;
+use KoolKode\Database\PDO\ManagedConnection;
 use KoolKode\Transaction\TransactionManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -24,19 +24,25 @@ use Psr\Log\LoggerInterface;
  */
 class ConnectionManager implements ConnectionManagerInterface
 {
-	const NAME_DEFAULT = 'default';
-	
-	protected $config;
-	protected $logger;
-	protected $manager;
+	protected $adapters = [];
 	
 	protected $connections = [];
 	
-	public function __construct(Configuration $config, LoggerInterface $logger = NULL, TransactionManagerInterface $manager = NULL)
+	protected $config;
+	
+	protected $logger;
+	
+	protected $manager;
+	
+	public function __construct(Configuration $config, TransactionManagerInterface $manager = NULL)
 	{
 		$this->config = $config;
-		$this->logger = $logger;
 		$this->manager = $manager;
+	}
+	
+	public function setLogger(LoggerInterface $logger = NULL)
+	{
+		$this->logger = $logger;
 	}
 	
 	public function getConnection($name)
@@ -50,62 +56,72 @@ class ConnectionManager implements ConnectionManagerInterface
 		
 		if(!$config->has($name))
 		{
-			if($config->has(self::NAME_DEFAULT))
-			{
-				return $this->getConnection(self::NAME_DEFAULT);
-			}
-			
-			throw new \OutOfBoundsException(sprintf('PDO connection not found: "%s"', $name));
+			throw new \OutOfBoundsException(sprintf('Database connection not registered: "%s"', $name));
+		}
+		
+		$config = $config->getConfig($name);
+		$conn = $this->getAdapter($config->getString('adapter'));
+		
+		if($config->has('prefix'))
+		{
+			$conn = new PrefixConnectionDecorator($conn, $config->getString('prefix'));
+		}
+		
+		return $this->connections[$name] = $conn;
+	}
+	
+	public function getAdapter($name)
+	{
+		if(isset($this->adapters[$name]))
+		{
+			return $this->adapters[$name];
+		}
+		
+		$config = $this->config->getConfig('adapter');
+		
+		if(!$config->has($name))
+		{
+			throw new \OutOfBoundsException(sprintf('Database adapter not registered: "%s"', $name));
 		}
 		
 		$config = $config->getConfig($name);
 		
-		if($config->has('alias'))
-		{
-			return $this->getConnection($config->getString('alias'));
-		}
-		
 		$dsn = $config->getString('dsn');
 		
-		if($this->manager !== NULL && $config->getBoolean('managed', true))
-		{
-			$pdo = new ManagedConnection($this->manager, $dsn, $config->get('username', NULL), $config->get('password', NULL));
-		}
-		else
-		{
-			$pdo = new Connection($dsn, $config->get('username', NULL), $config->get('password', NULL));
-		}
+		$pdo = $this->createPDO($dsn, $config->get('username', NULL), $config->get('password', NULL));
+		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		
 		if($this->logger !== NULL)
 		{
-			$this->logger->info('Established database connection <{dsn}>', [
+			$this->logger->info('Database adapter connected to <{dsn}>', [
 				'dsn' => $dsn
 			]);
 		}
 		
-		$pdo->setLogger($this->logger);
-		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-		$pdo->setDebug($config->getBoolean('debug', false));
-		
-		switch($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME))
+		if($this->manager !== NULL && $config->getBoolean('managed', true))
 		{
-			case 'mysql':
-				$sql = sprintf('SET NAMES %s', $pdo->quote($config->getString('encoding', 'utf8')));
-				$sql .= sprintf(', SESSION time_zone = %s', $pdo->quote(gmdate('P')));
-				$pdo->exec($sql);
-				break;
-			case 'sqlite':
-				$pdo->exec("PRAGMA journal_mode = WAL");
-				$pdo->exec("PRAGMA locking_mode = EXCLUSIVE");
-				$pdo->exec("PRAGMA synchronous = NORMAL");
-				break;
+			$conn = new ManagedConnection($this->manager, $pdo, $config->getConfig('options')->toArray());
+		}
+		else
+		{
+			$conn = new Connection($pdo, $config->getConfig('options')->toArray());
 		}
 		
-		if($config->getBoolean('shared', true))
+		return $this->adapters[$name] = $conn;
+	}
+	
+	public function createPDO($dsn, $username = NULL, $password = NULL)
+	{
+		if('' == trim($username))
 		{
-			return $this->connections[$name] = $pdo;
+			$username = NULL;
 		}
 		
-		return $pdo;
+		if('' == trim($password))
+		{
+			$password = NULL;
+		}
+		
+		return new \PDO($dsn, $username, $password);
 	}
 }

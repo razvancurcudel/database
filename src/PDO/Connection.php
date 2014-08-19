@@ -13,7 +13,6 @@ namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\DB;
-use Psr\Log\LoggerInterface;
 
 /**
  * Adapts a wrapped PDO connection to the KoolKode Database API.
@@ -31,19 +30,32 @@ class Connection implements ConnectionInterface
 	
 	protected $transLevel = 0;
 	
-	protected $logger;
-	
 	protected $driverName;
 	
 	protected $options = [];
 	
+	/**
+	 * Create a new connection wrapping a PDO instance.
+	 * 
+	 * @param \PDO $pdo
+	 * @param array<string, mixed> $options
+	 */
 	public function __construct(\PDO $pdo, array $options = [])
 	{
 		$this->pdo = $pdo;
 		$this->options = $options;
-
-		$this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		
 		$this->driverName = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+		
+		switch($this->driverName)
+		{
+			case DB::DRIVER_SQLITE:
+				$this->initializeSqlite();
+				break;
+			case DB::DRIVER_MYSQL:
+				$this->initializeMySQL();
+				break;
+		}
 	}
 	
 	/**
@@ -78,13 +90,6 @@ class Connection implements ConnectionInterface
 	public function getPDO()
 	{
 		return $this->pdo;
-	}
-	
-	public function setLogger(LoggerInterface $logger)
-	{
-		$this->logger = $logger;
-		
-		return $this;
 	}
 	
 	/**
@@ -315,5 +320,54 @@ class Connection implements ConnectionInterface
 		}
 		
 		return '"' . str_replace('"', '\\"', $identifier) . '"';
+	}
+	
+	protected function initializeSqlite()
+	{
+		if(array_key_exists('pragma', $this->options))
+		{
+			foreach((array)$this->options['pragma'] as $k => $v)
+			{
+				$this->execute('PRAGMA ' . $k . ' = ' . $v);
+			}
+		}
+	}
+	
+	protected function initializeMySQL()
+	{
+		$encoding = array_key_exists(DB::OPTION_ENCODING, $this->options) ? $this->options[DB::OPTION_ENCODING] : 'UTF-8';
+		$encoding = strtolower(str_replace(['_', '-'], '', $encoding));
+		
+		$sql = ['NAMES :names'];
+		$params = ['names' => $encoding];
+		
+		if(array_key_exists(DB::OPTION_TIMEZONE, $this->options))
+		{
+			$tz = (string)$this->options[DB::OPTION_TIMEZONE];
+			
+			$timezone = new \DateTimeZone(($tz == 'default') ? date_default_timezone_get() : $tz);
+			$offset = $timezone->getOffset(new \DateTime('now', $timezone));
+		}
+		else
+		{
+			$offset = 0;
+		}
+		
+		$d1 = new \DateTime();
+		$d2 = new \DateTime();
+		$sign = ($offset < 0) ? '-' : '+';
+		
+		$d2->add(new \DateInterval('PT' . abs($offset) . 'S'));
+		$diff = $d2->diff($d1);
+		
+		$sql[] = 'SESSION time_zone = :timezone';
+		$params['timezone'] = sprintf('%s%02u:%02u', $sign, $diff->h, $diff->i);
+		
+		if(!empty($sql))
+		{
+			$stmt = $this->prepare("SET " . implode(', ', $sql));
+			$stmt->bindAll($params);
+			$stmt->execute();
+		}
 	}
 }
