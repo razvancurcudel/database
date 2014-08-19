@@ -318,14 +318,14 @@ class Statement implements StatementInterface
 		
 		switch($style)
 		{
-			case DB::FETCH_ASSOC:
-				$style = \PDO::FETCH_ASSOC;
-				break;
 			case DB::FETCH_BOTH:
 				$style = \PDO::FETCH_BOTH;
 				break;
 			case DB::FETCH_NUM:
 				$style = \PDO::FETCH_NUM;
+				break;
+			default:
+				$style = \PDO::FETCH_ASSOC;
 				break;
 		}
 		
@@ -386,14 +386,14 @@ class Statement implements StatementInterface
 		
 		switch($style)
 		{
-			case DB::FETCH_ASSOC:
-				$style = \PDO::FETCH_ASSOC;
-				break;
 			case DB::FETCH_BOTH:
 				$style = \PDO::FETCH_BOTH;
 				break;
 			case DB::FETCH_NUM:
 				$style = \PDO::FETCH_NUM;
+				break;
+			default:
+				$style = \PDO::FETCH_ASSOC;
 				break;
 		}
 		
