@@ -324,11 +324,13 @@ class Connection implements ConnectionInterface
 	
 	protected function initializeSqlite()
 	{
-		if(array_key_exists('pragma', $this->options))
+		$this->execute("PRAGMA foreign_keys = ON");
+		
+		if(array_key_exists(DB::OPTION_SQLITE_PRAGMA, $this->options))
 		{
-			foreach((array)$this->options['pragma'] as $k => $v)
+			foreach((array)$this->options[DB::OPTION_SQLITE_PRAGMA] as $k => $v)
 			{
-				$this->execute('PRAGMA ' . $k . ' = ' . $v);
+				$this->execute(sprintf("PRAGMA %s = %s", $k, $v));
 			}
 		}
 	}

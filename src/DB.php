@@ -51,6 +51,13 @@ abstract class DB
 	const OPTION_TIMEZONE = 'timezone';
 	
 	/**
+	 * Array options that declares pragma directives to be set when connecting to a Sqlite DB.
+	 * 
+	 * @var string
+	 */
+	const OPTION_SQLITE_PRAGMA = 'sqlite_pragma';
+	
+	/**
 	 * Boolean option that indicates LIMIT / OFFSET support in IBM DB2 9.7+.
 	 * 
 	 * This requires the database to enable <code>DB2_COMPATIBILITY_VECTOR=4000</code> (every single bit can
