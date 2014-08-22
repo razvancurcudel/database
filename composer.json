@@ -25,13 +25,18 @@
 		"psr/log" : "1.0.0"
 	},
 	"suggest" : {
-        "koolkode/stream": "Adds support for streaming LOBs to the database.",
-        "koolkode/transaction": "Allows for externally managed transactions.",
+		"koolkode/stream" : "Adds support for streaming LOBs to the database.",
+		"koolkode/transaction" : "Allows for externally managed transactions.",
 		"psr/log" : "Enables query logging and auto-explain in debug mode."
 	},
 	"autoload" : {
 		"psr-4" : {
 			"KoolKode\\Database\\" : "src/"
 		}
-	}
+	},
+	"autoload-dev" : {
+        "psr-4" : {
+            "KoolKode\\Database\\" : "test/src/"
+        }
+    }
 }
