@@ -40,6 +40,16 @@ class ConnectionManager implements ConnectionManagerInterface
 		$this->manager = $manager;
 	}
 	
+	public function __debugInfo()
+	{
+		return [
+			'adapters' => array_keys($this->adapters),
+			'connections' => array_keys($this->connections),
+			'config' => $this->config,
+			'manager' => $this->manager
+		];
+	}
+	
 	public function setLogger(LoggerInterface $logger = NULL)
 	{
 		$this->logger = $logger;
