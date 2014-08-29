@@ -285,19 +285,9 @@ class Connection implements ConnectionInterface
 	 */
 	public function insert($tableName, array $values, $prefix = NULL)
 	{
-		$sql = 'INSERT INTO ' . $this->quoteIdentifier($tableName) . ' (';
-		
-		$sql .= implode(', ', array_map(function($key) {
-			return $this->quoteIdentifier($key);
-		}, array_keys($values)));
-		
-		$sql .= ') VALUES (';
-		
-		$sql .= implode(', ', array_map(function($key) {
-			return ':' . $key;
-		}, array_keys($values)));
-		
-		$sql .= ')';
+		$sql = 'INSERT INTO ' . $this->quoteIdentifier($tableName);
+		$sql .= ' (' . $this->buildColumnNames($values);
+		$sql .= ') VALUES (' . $this->buildColumnValues($values) . ')';
 		
 		return $this->prepare($sql, $prefix)->bindAll($values)->execute();
 	}
@@ -308,6 +298,17 @@ class Connection implements ConnectionInterface
 	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
 	{
 		$merged = array_merge($values, $unique);
+		
+		// Ensure at least one value is set in update statement.
+		if(empty($values))
+		{
+			foreach($merged as $k => $v)
+			{
+				$values[$k] = $v;
+		
+				break;
+			}
+		}
 		
 		switch($this->driverName)
 		{
@@ -365,21 +366,21 @@ class Connection implements ConnectionInterface
 	{
 		return implode(', ', array_map(function($key) {
 			return $this->quoteIdentifier($key);
-		}, array_values($values)));
+		}, array_keys($values)));
 	}
 	
 	protected function buildColumnValues(array $values)
 	{
 		return implode(', ', array_map(function($key) {
 			return ':' . $key;
-		}, array_values($values)));
+		}, array_keys($values)));
 	}
 	
 	protected function buildIdentity(array $values)
 	{
 		return implode(' AND ', array_map(function($key) {
 			return $this->quoteIdentifier($key) . ' = :' . $key;
-		}, array_values($values)));
+		}, array_keys($values)));
 	}
 	
 	/**

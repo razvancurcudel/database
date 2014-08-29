@@ -144,7 +144,7 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $unique = [], array $values, $prefix = NULL)
+	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
 	{
 		return $this->conn->upsert($tableName, $unique, $values, $prefix);
 	}

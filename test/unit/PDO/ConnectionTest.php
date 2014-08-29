@@ -17,42 +17,23 @@ use KoolKode\Database\PrefixConnectionDecorator;
 
 class ConnectionTest extends DatabaseTestCase
 {
-	protected static $conn;
+	protected $conn;
 	
-	public static function setUpBeforeClass()
+	protected function setUp()
 	{
-		parent::setUpBeforeClass();
-		
-		if(self::$conn !== NULL)
-		{
-			return;
-		}
+		parent::setUp();
 		
 		$dsn = (string)self::getEnvParam('DB_DSN', 'sqlite::memory:');
 		$username = self::getEnvParam('DB_USERNAME', NULL);
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 		
-		printf("DB: \"%s\"\n", $dsn);
-		
 		$pdo = new \PDO($dsn, $username, $password);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		
-		self::$conn = new PrefixConnectionDecorator(new Connection($pdo), 'db_');
+		$this->conn = new PrefixConnectionDecorator(new Connection($pdo), 'db_');
 		
-		switch(self::$conn->getDriverName())
-		{
-			case DB::DRIVER_SQLITE:
-				self::$conn->execute("PRAGMA foreign_keys = ON");
-				break;
-			case DB::DRIVER_MYSQL:
-				self::$conn->execute("SET NAMES 'utf8'");
-				break;
-		}
-		
-		$ddl = str_replace('\\', '/', sprintf('%s/ConnectionTest.%s.sql', __DIR__, self::$conn->getDriverName()));
+		$ddl = str_replace('\\', '/', sprintf('%s/ConnectionTest.%s.sql', __DIR__, $this->conn->getDriverName()));
 		$chunks = explode(';', file_get_contents($ddl));
-		
-		printf("DDL: \"%s\"\n\n", $ddl);
 			
 		foreach($chunks as $chunk)
 		{
@@ -63,36 +44,7 @@ class ConnectionTest extends DatabaseTestCase
 				continue;
 			}
 		
-			self::$conn->execute($chunk);
-		}
-	}
-	
-	protected function setUp()
-	{
-		parent::setUp();
-		
-		$this->clearTables();
-	}
-	
-	protected function tearDown()
-	{
-		$this->clearTables();
-	
-		parent::tearDown();
-	}
-	
-	protected function clearTables()
-	{
-		static $tables = [
-			'#__post_tag',
-			'#__tag',
-			'#__post',
-			'#__blog'
-		];
-		
-		foreach($tables as $table)
-		{
-			self::$conn->prepare("DELETE FROM `$table`")->execute();
+			$this->conn->execute($chunk);
 		}
 	}
 	
@@ -105,16 +57,16 @@ class ConnectionTest extends DatabaseTestCase
 					VALUES
 						(:title, :date)
 		";
-		$stmt = self::$conn->prepare($sql);
+		$stmt = $this->conn->prepare($sql);
 		$stmt->bindValue('title', 'My Test Blog');
 		$stmt->bindValue('date', $date->format('U'));
 		$this->assertEquals(1, $stmt->execute());
-		$this->assertEquals(1, self::$conn->lastInsertId());
+		$this->assertEquals(1, $this->conn->lastInsertId());
 		
 		$sql = "	SELECT *
 					FROM `#__blog`
 		";
-		$stmt = self::$conn->prepare($sql);
+		$stmt = $this->conn->prepare($sql);
 		$stmt->transform('created_at', function($value) {
 			return new \DateTime('@' . $value);
 		});
@@ -131,5 +83,40 @@ class ConnectionTest extends DatabaseTestCase
 		$this->assertEquals('My Test Blog', $row['title']);
 		$this->assertEquals($date, $row['created_at']);
 		$this->assertEquals('my-test-blog', $row['slug']);
+	}
+	
+	public function testInsertAndUpsert()
+	{
+		$this->conn->insert('#__blog', [
+			'title' => 'My Foo Blog',
+			'created_at' => time()
+		]);
+		
+		$blogId = $this->conn->lastInsertId();
+		
+		$this->conn->insert('#__post', [
+			'blog_id' => $blogId,
+			'title' => 'My first Post',
+			'content' => 'Hello World :)',
+			'created_at' => time()
+		]);
+		
+		$postId = $this->conn->lastInsertId();
+		
+		$this->conn->insert('#__tag', [
+			'name' => 'Test'
+		]);
+		
+		$tagId = $this->conn->lastInsertId();
+		
+		$this->conn->upsert('#__post_tag', [
+			'post_id' => $postId,
+			'tag_id' => $tagId
+		], []);
+		
+		$this->conn->upsert('#__post_tag', [
+			'post_id' => $postId,
+			'tag_id' => $tagId
+		], []);
 	}
 }
