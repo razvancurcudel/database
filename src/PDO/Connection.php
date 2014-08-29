@@ -283,6 +283,108 @@ class Connection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function insert($tableName, array $values, $prefix = NULL)
+	{
+		$sql = 'INSERT INTO ' . $this->quoteIdentifier($tableName) . ' (';
+		
+		$sql .= implode(', ', array_map(function($key) {
+			return $this->quoteIdentifier($key);
+		}, array_keys($values)));
+		
+		$sql .= ') VALUES (';
+		
+		$sql .= implode(', ', array_map(function($key) {
+			return ':' . $key;
+		}, array_keys($values)));
+		
+		$sql .= ')';
+		
+		return $this->prepare($sql, $prefix)->bindAll($values)->execute();
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
+	{
+		$merged = array_merge($values, $unique);
+		
+		switch($this->driverName)
+		{
+			case DB::DRIVER_SQLITE:
+				$sql = 'INSERT OR REPLACE INTO ' . $this->quoteIdentifier($tableName) . ' (';
+				$sql .= $this->buildColumnNames($merged) . ') VALUES (' . $this->buildColumnValues($merged) . ')';
+				
+				return $this->prepare($sql, $prefix)->bindAll($merged)->execute();
+				
+			case DB::DRIVER_MYSQL:
+				$sql = 'INSERT INTO ' . $this->quoteIdentifier($tableName) . ' (';
+				$sql .= $this->buildColumnNames($merged) . ') VALUES (';
+				$sql .= $this->buildColumnValues($merged) . ') ON DUPLICATE KEY UPDATE ';
+				
+				foreach(array_keys($values) as $i => $key)
+				{
+					if($i != 0)
+					{
+						$sql .= ', ';
+					}
+					
+					$sql .= $this->quoteIdentifier($key) . ' = VALUES(';
+					$sql .= $this->quoteIdentifier($key) . ')';
+				}
+				
+				return $this->prepare($sql, $prefix)->bindAll($merged)->execute();
+		}
+		
+		$this->beginTransaction();
+		
+		try
+		{
+			$sql = 'UPDATE ' . $this->quoteIdentifier($tableName);
+			$sql .= ' SET ' . $this->buildIdentity($values);
+			$sql .= ' WHERE ' . $this->buildIdentity($unique);
+			
+			$count = $this->prepare($sql, $prefix)->bindAll($merged)->execute();
+			
+			if($count < 1)
+			{
+				$this->insert($tableName, $merged, $prefix);
+			}
+		}
+		catch(\Exception $e)
+		{
+			$this->rollBack();
+			
+			throw $e;
+		}
+		
+		$this->commit();
+	}
+	
+	protected function buildColumnNames(array $values)
+	{
+		return implode(', ', array_map(function($key) {
+			return $this->quoteIdentifier($key);
+		}, array_values($values)));
+	}
+	
+	protected function buildColumnValues(array $values)
+	{
+		return implode(', ', array_map(function($key) {
+			return ':' . $key;
+		}, array_values($values)));
+	}
+	
+	protected function buildIdentity(array $values)
+	{
+		return implode(' AND ', array_map(function($key) {
+			return $this->quoteIdentifier($key) . ' = :' . $key;
+		}, array_values($values)));
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
 	{
 		if($this->driverName == DB::DRIVER_MSSQL)

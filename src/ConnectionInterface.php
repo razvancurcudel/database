@@ -92,9 +92,30 @@ interface ConnectionInterface
 	public function prepare($sql, $prefix = NULL);
 	
 	/**
+	 * Simplified insert using the given table and key => value pairs as column names / values.
+	 * 
+	 * @param string $tableName
+	 * @param array<string, mixed> $values
+	 * @param string $prefix
+	 */
+	public function insert($tableName, array $values, $prefix = NULL);
+	
+	/**
+	 * Simplified upsert (INSERT when no primary / unique key blocks or UPDATE when a matching row is present) using
+	 * the given table and key => value pairs as column names / values.
+	 * 
+	 * @param string $tableName
+	 * @param array<string, mixed> $unique
+	 * @param array<string, mixed> $values
+	 * @param string $prefix
+	 */
+	public function upsert($tableName, array $unique, array $values, $prefix = NULL);
+	
+	/**
 	 * Get the last inserted ID value from an auto-increment column or a named sequence.
 	 * 
 	 * @param string $sequenceName
+	 * @param string $prefix
 	 * @return integer
 	 */
 	public function lastInsertId($sequenceName = NULL, $prefix = NULL);

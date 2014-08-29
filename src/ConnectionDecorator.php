@@ -136,6 +136,22 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function insert($tableName, array $values, $prefix = NULL)
+	{
+		return $this->conn->insert($tableName, $values, $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function upsert($tableName, array $unique = [], array $values, $prefix = NULL)
+	{
+		return $this->conn->upsert($tableName, $unique, $values, $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
 	{
 		return $this->conn->lastInsertId($sequenceName, $prefix);
