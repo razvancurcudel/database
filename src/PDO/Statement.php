@@ -15,7 +15,6 @@ use KoolKode\Database\DB;
 use KoolKode\Database\ParamEncoderInterface;
 use KoolKode\Database\PlaceholderList;
 use KoolKode\Database\StatementInterface;
-use KoolKode\Stream\ResourceStream;
 use KoolKode\Stream\StreamInterface;
 
 /**
@@ -234,11 +233,7 @@ class Statement implements StatementInterface
 				}
 			}
 			
-			if($v instanceof ResourceStream)
-			{
-				$this->stmt->bindValue($k, $v->getResource(), \PDO::PARAM_LOB);
-			}
-			elseif($v instanceof StreamInterface)
+			if($v instanceof StreamInterface)
 			{
 				$this->stmt->bindValue($k, fopen((string)$v, 'rb'), \PDO::PARAM_LOB);
 			}
