@@ -87,36 +87,66 @@ class ConnectionTest extends DatabaseTestCase
 	
 	public function testInsertAndUpsert()
 	{
-		$this->conn->insert('#__blog', [
+		$blog = [
 			'title' => 'My Foo Blog',
 			'created_at' => time()
-		]);
+		];
 		
-		$blogId = $this->conn->lastInsertId();
+		$this->conn->insert('#__blog', $blog);
+		$blog['id'] = $this->conn->lastInsertId();
 		
-		$this->conn->insert('#__post', [
-			'blog_id' => $blogId,
+		$stmt = $this->conn->prepare("SELECT * FROM `#__blog` WHERE `id` = :id");
+		$stmt->bindValue('id', $blog['id']);
+		$stmt->execute();
+		$this->assertEquals($blog, $stmt->fetchNextRow());
+		
+		$post = [
+			'blog_id' => $blog['id'],
 			'title' => 'My first Post',
 			'content' => 'Hello World :)',
 			'created_at' => time()
-		]);
+		];
 		
-		$postId = $this->conn->lastInsertId();
+		$this->conn->insert('#__post', $post);
+		$post['id'] = $this->conn->lastInsertId();
 		
-		$this->conn->insert('#__tag', [
+		$stmt = $this->conn->prepare("SELECT * FROM `#__post` WHERE `id` = :id");
+		$stmt->bindValue('id', $post['id']);
+		$stmt->execute();
+		$this->assertEquals($post, $stmt->fetchNextRow());
+		
+		$tag = [
 			'name' => 'Test'
-		]);
+		];
 		
-		$tagId = $this->conn->lastInsertId();
+		$this->conn->insert('#__tag', $tag);
+		$tag['id'] = $this->conn->lastInsertId();
+		
+		$stmt = $this->conn->prepare("SELECT * FROM `#__tag` WHERE `id` = :id");
+		$stmt->bindValue('id', $tag['id']);
+		$stmt->execute();
+		$this->assertEquals($tag, $stmt->fetchNextRow());
+		
+		$stmt = $this->conn->prepare("SELECT COUNT(*) FROM `#__post_tag`");
+		$stmt->execute();
+		$this->assertEquals(0, $stmt->fetchNextColumn(0));
 		
 		$this->conn->upsert('#__post_tag', [
-			'post_id' => $postId,
-			'tag_id' => $tagId
+			'post_id' => $post['id'],
+			'tag_id' => $tag['id']
 		], []);
 		
+		$stmt = $this->conn->prepare("SELECT COUNT(*) FROM `#__post_tag`");
+		$stmt->execute();
+		$this->assertEquals(1, $stmt->fetchNextColumn(0));
+		
 		$this->conn->upsert('#__post_tag', [
-			'post_id' => $postId,
-			'tag_id' => $tagId
+			'post_id' => $post['id'],
+			'tag_id' => $tag['id']
 		], []);
+		
+		$stmt = $this->conn->prepare("SELECT COUNT(*) FROM `#__post_tag`");
+		$stmt->execute();
+		$this->assertEquals(1, $stmt->fetchNextColumn(0));
 	}
 }

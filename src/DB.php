@@ -69,9 +69,9 @@ abstract class DB
 	 */
 	const OPTION_DB2_LIMIT_OFFSET = 'db2_limit_offset';
 	
-	const FETCH_BOTH = 0;
+	const FETCH_BOTH = 1;
 	
-	const FETCH_ASSOC = 1;
+	const FETCH_ASSOC = 2;
 	
-	const FETCH_NUM = 2;
+	const FETCH_NUM = 3;
 }
