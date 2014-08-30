@@ -12,10 +12,11 @@
 namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\DB;
-use KoolKode\Database\LargeObjectStream;
 use KoolKode\Database\ParamEncoderInterface;
 use KoolKode\Database\PlaceholderList;
 use KoolKode\Database\StatementInterface;
+use KoolKode\Stream\ResourceStream;
+use KoolKode\Stream\StreamInterface;
 
 /**
  * Adapts a wrapped PDO statement to the KoolKode Database API.
@@ -233,9 +234,13 @@ class Statement implements StatementInterface
 				}
 			}
 			
-			if($v instanceof LargeObjectStream)
+			if($v instanceof ResourceStream)
 			{
 				$this->stmt->bindValue($k, $v->getResource(), \PDO::PARAM_LOB);
+			}
+			elseif($v instanceof StreamInterface)
+			{
+				$this->stmt->bindValue($k, fopen((string)$v, 'rb'), \PDO::PARAM_LOB);
 			}
 			else
 			{
