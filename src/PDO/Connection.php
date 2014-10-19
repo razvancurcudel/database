@@ -298,70 +298,76 @@ class Connection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values, $prefix = NULL)
 	{
-		$merged = array_merge($values, $unique);
+		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
 		
 		// Ensure at least one value is set in update statement.
 		if(empty($values))
 		{
-			foreach($merged as $k => $v)
+			foreach($params as $k => $v)
 			{
-				$values[$k] = $v;
+				$values[substr($k, 1)] = $v;
 		
 				break;
 			}
 		}
 		
-		switch($this->driverName)
-		{
-			case DB::DRIVER_SQLITE:
+// 		switch($this->driverName)
+// 		{
+// 			case DB::DRIVER_SQLITE:
 				
-				$sql = sprintf(
-					'INSERT OR REPLACE INTO %s (%s) VALUES (%s)',
-					$this->quoteIdentifier($tableName),
-					implode(', ', $this->buildNameList($merged)),
-					implode(', ', $this->buildParamList($merged))
-				);
+// 				$sql = sprintf(
+// 					'INSERT OR REPLACE INTO %s (%s) VALUES (%s)',
+// 					$this->quoteIdentifier($tableName),
+// 					implode(', ', $this->buildNameList(array_merge($values, $key))),
+// 					implode(', ', $this->buildParamList($params))
+// 				);
 				
-				return $this->prepare($sql, $prefix)->bindAll($merged)->execute();
+// 				return $this->prepare($sql, $prefix)->bindAll($params)->execute();
 				
-			case DB::DRIVER_MYSQL:
+// 			case DB::DRIVER_MYSQL:
 				
-				$sql = sprintf(
-					'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE ',
-					$this->quoteIdentifier($tableName),
-					implode(', ', $this->buildNameList($merged)),
-					implode(', ', $this->buildParamList($merged))
-				);
+// 				$sql = sprintf(
+// 					'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE ',
+// 					$this->quoteIdentifier($tableName),
+// 					implode(', ', $this->buildNameList(array_merge($values, $key))),
+// 					implode(', ', $this->buildParamList($params))
+// 				);
 				
-				foreach(array_keys($values) as $i => $key)
-				{
-					$sql .= sprintf(
-						'%s%s = VALUES(%s)',
-						($i != 0) ? ', ' : '',
-						$this->quoteIdentifier($key),
-						$this->quoteIdentifier($key)
-					);
-				}
+// 				foreach(array_keys($values) as $i => $key)
+// 				{
+// 					$sql .= sprintf(
+// 						'%s%s = VALUES(%s)',
+// 						($i != 0) ? ', ' : '',
+// 						$this->quoteIdentifier($key),
+// 						$this->quoteIdentifier($key)
+// 					);
+// 				}
 				
-				return $this->prepare($sql, $prefix)->bindAll($merged)->execute();
-		}
+// 				return $this->prepare($sql, $prefix)->bindAll($params)->execute();
+// 		}
 		
 		$this->beginTransaction();
 		
 		try
 		{
 			$sql = sprintf(
-				'UPDATE %s SET %s WHERE %s',
+				'SELECT COUNT(*) FROM %s WHERE %s',
 				$this->quoteIdentifier($tableName),
-				implode(', ', $this->buildIdentity($values)),
-				implode(' AND ', $this->buildIdentity($unique))
+				implode(' AND ', $this->buildIdentity($key))
 			);
 			
-			if(!$this->prepare($sql, $prefix)->bindAll($merged)->execute())
+			$stmt = $this->prepare($sql, $prefix)->bindAll($key);
+			$stmt->execute();
+			
+			if($stmt->fetchNextColumn(0))
 			{
-				$this->insert($tableName, $merged, $prefix);
+				$this->update($tableName, $key, $values, $prefix);
+			}
+			else
+			{
+				$this->insert($tableName, array_merge($values, $key), $prefix);
 			}
 		}
 		catch(\Exception $e)
@@ -374,6 +380,62 @@ class Connection implements ConnectionInterface
 		$this->commit();
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function update($tableName, array $key, array $values, $prefix = NULL)
+	{
+		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
+		
+		$sql = sprintf(
+			'UPDATE %s SET %s WHERE %s',
+			$this->quoteIdentifier($tableName),
+			implode(', ', $this->buildIdentity($values, 'v')),
+			implode(' AND ', $this->buildIdentity($key, 'k'))
+		);
+		
+		return $this->prepare($sql, $prefix)->bindAll($params)->execute();
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function delete($tableName, array $key, $prefix = NULL)
+	{
+		$sql = sprintf(
+			'DELETE FROM %s WHERE %s',
+			$this->quoteIdentifier($tableName),
+			implode(' AND ', $this->buildIdentity($key))	
+		);
+		
+		return $this->prepare($sql, $prefix)->bindAll($key)->execute();
+	}
+	
+	/**
+	 * Apply a string prefix to all ay and return the resulting array.
+	 * 
+	 * @param string $prefix
+	 * @param array<string, mixed> $data
+	 * @return array<string, mixed>
+	 */
+	protected function prefixKeys($prefix, array $data)
+	{
+		$result = [];
+		
+		foreach($data as $k => $v)
+		{
+			$result[$prefix . $k] = $v;
+		}
+		
+		return $result;
+	}
+	
+	/**
+	 * Build a list of quoted column names from the keys of the given array.
+	 * 
+	 * @param array<string, mixed> $values
+	 * @return array<string>
+	 */
 	protected function buildNameList(array $values)
 	{
 		return array_map(function($key) {
@@ -381,17 +443,31 @@ class Connection implements ConnectionInterface
 		}, array_keys($values));
 	}
 	
-	protected function buildParamList(array $values)
+	/**
+	 * Build a list of parameter placeholders named using keys from the given array.
+	 * 
+	 * @param array<string, mixed> $values
+	 * @param string $namePrefix
+	 * @return array<string>
+	 */
+	protected function buildParamList(array $values, $namePrefix = '')
 	{
-		return array_map(function($key) {
-			return ':' . $key;
+		return array_map(function($key) use($namePrefix) {
+			return ':' . $namePrefix . $key;
 		}, array_keys($values));
 	}
 	
-	protected function buildIdentity(array $values)
+	/**
+	 * Build an identity (column = :value) list from the given key => value pairs.
+	 * 
+	 * @param array<string, mixed> $values
+	 * @param string $namePrefix
+	 * @return array<string>
+	 */
+	protected function buildIdentity(array $values, $namePrefix = '')
 	{
-		return array_map(function($key) {
-			return $this->quoteIdentifier($key) . ' = :' . $key;
+		return array_map(function($key) use($namePrefix) {
+			return $this->quoteIdentifier($key) . ' = :' . $namePrefix . $key;
 		}, array_keys($values));
 	}
 	

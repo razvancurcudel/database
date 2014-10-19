@@ -105,11 +105,32 @@ interface ConnectionInterface
 	 * the given table and key => value pairs as column names / values.
 	 * 
 	 * @param string $tableName
-	 * @param array<string, mixed> $unique
+	 * @param array<string, mixed> $key
 	 * @param array<string, mixed> $values
 	 * @param string $prefix
 	 */
-	public function upsert($tableName, array $unique, array $values, $prefix = NULL);
+	public function upsert($tableName, array $key, array $values, $prefix = NULL);
+	
+	/**
+	 * Update rows using key => value pairs when they match the given index constraints.
+	 * 
+	 * @param string $tableName
+	 * @param array<string, mixed> $key
+	 * @param array<string, mixed> $values
+	 * @param string $prefix
+	 * @return integer The number of affected rows.
+	 */
+	public function update($tableName, array $key, array $values, $prefix = NULL);
+	
+	/**
+	 * Delete all rows that match the given index constraints.
+	 * 
+	 * @param string $tableName
+	 * @param array<string, mixed> $key
+	 * @param string $prefix
+	 * @return integer The number of deleted rows.
+	 */
+	public function delete($tableName, array $key, $prefix = NULL);
 	
 	/**
 	 * Get the last inserted ID value from an auto-increment column or a named sequence.

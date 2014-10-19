@@ -75,9 +75,25 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values, $prefix = NULL)
 	{
-		return $this->conn->upsert($tableName, $unique, $values, ($prefix === NULL) ? $this->prefix : $prefix);
+		return $this->conn->upsert($tableName, $key, $values, ($prefix === NULL) ? $this->prefix : $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function update($tableName, array $key, array $values, $prefix = NULL)
+	{
+		return $this->conn->update($tableName, $key, $values, ($prefix === NULL) ? $this->prefix : $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function delete($tableName, array $key, $prefix = NULL)
+	{
+		return $this->conn->delete($tableName, $key, ($prefix === NULL) ? $this->prefix : $prefix);
 	}
 	
 	/**

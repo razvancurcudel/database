@@ -148,5 +148,14 @@ class ConnectionTest extends DatabaseTestCase
 		$stmt = $this->conn->prepare("SELECT COUNT(*) FROM `#__post_tag`");
 		$stmt->execute();
 		$this->assertEquals(1, $stmt->fetchNextColumn(0));
+		
+		$this->assertEquals(1, $this->conn->delete('#__post_tag', [
+			'post_id' => $post['id'],
+			'tag_id' => $tag['id']
+		]));
+		
+		$stmt = $this->conn->prepare("SELECT COUNT(*) FROM `#__post_tag`");
+		$stmt->execute();
+		$this->assertEquals(0, $stmt->fetchNextColumn(0));
 	}
 }

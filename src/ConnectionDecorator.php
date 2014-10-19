@@ -144,9 +144,25 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $unique, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values, $prefix = NULL)
 	{
-		return $this->conn->upsert($tableName, $unique, $values, $prefix);
+		return $this->conn->upsert($tableName, $key, $values, $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function update($tableName, array $key, array $values, $prefix = NULL)
+	{
+		return $this->conn->update($tableName, $key, $values, $prefix);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function delete($tableName, array $key, $prefix = NULL)
+	{
+		return $this->conn->delete($tableName, $key, $prefix);
 	}
 	
 	/**

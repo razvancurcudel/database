@@ -7,7 +7,7 @@ php:
   - hhvm-nightly
 
 env:
-  - 'DB=sqlite DB_DSN="sqlite::memory:"'
+  - 'DB=sqlite'
   - 'DB=mysql'
 #  - 'DB=pgsql'
 
