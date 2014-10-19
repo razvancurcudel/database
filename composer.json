@@ -22,7 +22,8 @@
 		"phpunit/phpunit" : "4.*",
 		"koolkode/transaction" : "dev-master",
 		"koolkode/stream" : "dev-master",
-		"psr/log" : "1.0.0"
+		"psr/log" : "1.0.0",
+		"doctrine/dbal" : "~2"
 	},
 	"suggest" : {
 		"koolkode/stream" : "Adds support for streaming LOBs to the database.",
@@ -35,8 +36,8 @@
 		}
 	},
 	"autoload-dev" : {
-        "psr-4" : {
-            "KoolKode\\Database\\" : "test/src/"
-        }
-    }
+		"psr-4" : {
+			"KoolKode\\Database\\" : "test/src/"
+		}
+	}
 }

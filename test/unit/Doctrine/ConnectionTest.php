@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace KoolKode\Database\PDO;
+namespace KoolKode\Database\Doctrine;
 
+use Doctrine\DBAL\DriverManager;
 use KoolKode\Database\BaseConnectionTest;
-use KoolKode\Database\DB;
 use KoolKode\Database\PrefixConnectionDecorator;
 
 class ConnectionTest extends BaseConnectionTest
@@ -25,10 +25,30 @@ class ConnectionTest extends BaseConnectionTest
 		$username = self::getEnvParam('DB_USERNAME', NULL);
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 		
-		$pdo = new \PDO($dsn, $username, $password);
-		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		list($type, $params) = explode(':', $dsn, 2);
 		
-		$conn = new PrefixConnectionDecorator(new Connection($pdo), 'db_');
+		$options = [
+			'driver' => 'pdo_' . $type
+		];
+		
+		if('sqlite::memory:' == $dsn)
+		{
+			$options['memory'] = true;
+		}
+		else
+		{
+			$options['user'] = $username;
+			$options['password'] = $password;
+			$options['charset'] = 'utf8';
+			
+			foreach(explode(';', $params) as $conf)
+			{
+				$parts = array_map('trim', explode('=', $conf, 2));
+				$options[$parts[0]] = $parts[1];
+			}
+		}
+		
+		$conn = new PrefixConnectionDecorator(new Connection(DriverManager::getConnection($options)), 'db_');
 		
 		return $conn;
 	}
