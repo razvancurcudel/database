@@ -13,7 +13,7 @@ namespace KoolKode\Database;
 
 use KoolKode\Config\Configuration;
 use KoolKode\Config\YamlConfigurationLoader;
-use KoolKode\Database\PDO\Connection;
+use KoolKode\Database\Doctrine\Connection;
 use KoolKode\Database\Test\DatabaseTestCase;
 
 class ConnectionManagerTest extends DatabaseTestCase

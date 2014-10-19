@@ -97,21 +97,23 @@ class ConnectionManager implements ConnectionManagerInterface
 			throw new \OutOfBoundsException(sprintf('Database adapter not registered: "%s"', $name));
 		}
 		
-		$config = $config->getConfig($name);
+		$conn = static::createDoctrineConnection($config->getConfig($name)->toArray());
 		
-		if($config->has('dsn'))
-		{
-			$conn = $this->createPDOConnection(
-				$config->getString('dsn'),
-				$config->get('username', NULL),
-				$config->get('password', NULL),
-				$config->toArray()
-			);
-		}
-		else
-		{
-			$conn = static::createDoctrineConnection($config->toArray());
-		}
+// 		$config = $config->getConfig($name);
+		
+// 		if($config->has('dsn'))
+// 		{
+// 			$conn = $this->createPDOConnection(
+// 				$config->getString('dsn'),
+// 				$config->get('username', NULL),
+// 				$config->get('password', NULL),
+// 				$config->toArray()
+// 			);
+// 		}
+// 		else
+// 		{
+// 			$conn = static::createDoctrineConnection($config->toArray());
+// 		}
 		
 		return $this->adapters[$name] = $conn;
 	}
