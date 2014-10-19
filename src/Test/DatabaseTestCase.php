@@ -18,6 +18,13 @@ namespace KoolKode\Database\Test;
  */
 abstract class DatabaseTestCase extends \PHPUnit_Framework_TestCase
 {
+	protected function setUp()
+	{
+		date_default_timezone_set('UTC');
+		
+		parent::setUp();
+	}
+	
 	protected static function getEnvParam($name)
 	{
 		if(array_key_exists($name, $GLOBALS))
