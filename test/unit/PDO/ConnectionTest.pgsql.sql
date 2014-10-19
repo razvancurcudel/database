@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS `#__blog`;
 
 CREATE TABLE `#__blog` (
 	`id` SERIAL,
-	`title` character(250) NOT NULL,
+	`title` varchar(250) NOT NULL,
 	`created_at` integer NOT NULL,
 	PRIMARY KEY (`id`)
 );
@@ -14,7 +14,7 @@ CREATE TABLE `#__blog` (
 CREATE TABLE `#__post` (
 	`id` SERIAL,
 	`blog_id` integer NOT NULL,
-	`title` character(250) NOT NULL,
+	`title` varchar(250) NOT NULL,
 	`content` text NOT NULL,
 	`created_at` integer NOT NULL,
 	PRIMARY KEY (`id`),
@@ -23,7 +23,7 @@ CREATE TABLE `#__post` (
 
 CREATE TABLE `#__tag` (
 	`id` SERIAL,
-	`name` character(250) NOT NULL,
+	`name` varchar(250) NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
