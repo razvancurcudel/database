@@ -12,6 +12,7 @@
 namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\AbstractStatement;
+use KoolKode\Database\DB;
 
 /**
  * Adapts a wrapped PDO statement to the KoolKode Database API.
