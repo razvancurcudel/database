@@ -9,7 +9,7 @@ php:
 env:
   - 'DB=sqlite'
   - 'DB=mysql'
-#  - 'DB=pgsql'
+  - 'DB=pgsql'
 
 before_install:
   - 'composer selfupdate --no-interaction'
@@ -32,8 +32,8 @@ matrix:
   allow_failures:
     - php: hhvm
     - php: hhvm-nightly
-#  exclude:
-#    - php: hhvm
-#      env: 'DB=pgsql'
-#    - php: hhvm-nightly
-#      env: 'DB=pgsql'
+  exclude:
+    - php: hhvm
+      env: 'DB=pgsql'
+    - php: hhvm-nightly
+      env: 'DB=pgsql'
