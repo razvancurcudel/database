@@ -12,7 +12,7 @@
 namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\BaseConnectionTest;
-use KoolKode\Database\DB;
+use KoolKode\Database\ConnectionManager;
 use KoolKode\Database\PrefixConnectionDecorator;
 
 class ConnectionTest extends BaseConnectionTest
@@ -25,11 +25,10 @@ class ConnectionTest extends BaseConnectionTest
 		$username = self::getEnvParam('DB_USERNAME', NULL);
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 		
-		$pdo = new \PDO($dsn, $username, $password);
-		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		$manager = new ConnectionManager();
 		
-		$conn = new PrefixConnectionDecorator(new Connection($pdo), 'db_');
+		$conn = $manager->createPDOConnection($dsn, $username, $password);
 		
-		return $conn;
+		return new PrefixConnectionDecorator($conn, 'db_');
 	}
 }

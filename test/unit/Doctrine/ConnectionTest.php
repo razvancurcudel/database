@@ -11,8 +11,8 @@
 
 namespace KoolKode\Database\Doctrine;
 
-use Doctrine\DBAL\DriverManager;
 use KoolKode\Database\BaseConnectionTest;
+use KoolKode\Database\ConnectionManager;
 use KoolKode\Database\PrefixConnectionDecorator;
 
 class ConnectionTest extends BaseConnectionTest
@@ -25,31 +25,15 @@ class ConnectionTest extends BaseConnectionTest
 		$username = self::getEnvParam('DB_USERNAME', NULL);
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 		
-		list($type, $params) = explode(':', $dsn, 2);
+		$manager = new ConnectionManager();
 		
-		$options = [
-			'driver' => 'pdo_' . $type
-		];
+		$conn = $manager->createDoctrineConnection([
+			'dsn' => $dsn,
+			'user' => $username,
+			'password' => $password,
+			'charset' => 'utf8'
+		]);
 		
-		if('sqlite::memory:' == $dsn)
-		{
-			$options['memory'] = true;
-		}
-		else
-		{
-			$options['user'] = $username;
-			$options['password'] = $password;
-			$options['charset'] = 'utf8';
-			
-			foreach(explode(';', $params) as $conf)
-			{
-				$parts = array_map('trim', explode('=', $conf, 2));
-				$options[$parts[0]] = $parts[1];
-			}
-		}
-		
-		$conn = new PrefixConnectionDecorator(new Connection(DriverManager::getConnection($options)), 'db_');
-		
-		return $conn;
+		return new PrefixConnectionDecorator($conn, 'db_');
 	}
 }
