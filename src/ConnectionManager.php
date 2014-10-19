@@ -166,6 +166,15 @@ class ConnectionManager implements ConnectionManagerInterface
 		unset($params['managed']);
 		unset($params['options']);
 		
+		if(array_key_exists('username', $params))
+		{
+			if(!array_key_exists('user', $params))
+			{
+				$params['user'] = $params['username'];
+				unset($params['username']);
+			}
+		}
+		
 		if(isset($params['dsn']))
 		{
 			list($type, $tmp) = explode(':', $params['dsn'], 2);
