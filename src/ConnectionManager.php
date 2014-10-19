@@ -177,7 +177,7 @@ class ConnectionManager implements ConnectionManagerInterface
 			
 			if($cfg['driver'] == 'pdo_sqlite')
 			{
-				if($tmp[1] == ':memory;')
+				if($tmp == ':memory:')
 				{
 					$cfg['memory'] = true;
 				}
