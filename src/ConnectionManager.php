@@ -163,8 +163,18 @@ class ConnectionManager implements ConnectionManagerInterface
 		$managed = isset($params['managed']);
 		$options = !empty($params['options']) ? (array)$params['options'] : [];
 		
+		if(array_key_exists('encoding', $params))
+		{
+			$params['charset'] = $params['encoding'];
+			unset($params['encoding']);
+		}
+		
 		unset($params['managed']);
 		unset($params['options']);
+		
+		$params = array_merge([
+			'charset' => 'utf8'
+		], $params);
 		
 		if(array_key_exists('username', $params))
 		{
