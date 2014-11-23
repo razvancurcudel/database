@@ -206,7 +206,12 @@ abstract class AbstractStatement implements StatementInterface
 				break;
 		}
 		
-		return $this->enhanced ? $this->transformRow($this->stmt->fetch($style)) : $this->stmt->fetch($style);
+		if(false === ($row = $this->stmt->fetch($style)))
+		{
+			return false;
+		}
+		
+		return $this->enhanced ? $this->transformRow($row) : $row;
 	}
 	
 	/**
@@ -226,29 +231,14 @@ abstract class AbstractStatement implements StatementInterface
 			return $this->stmt->fetchColumn($column);
 		}
 		
-		$row = $this->stmt->fetch();
+		$style = is_integer($column) ? DB::FETCH_NUM : DB::FETCH_ASSOC;
 		
-		if($row === false)
+		if(false === ($row = $this->fetchNextRow($style)))
 		{
 			return false;
 		}
 		
-		$result = $row[$column];
-		
-		if(!empty($this->transformed[$column]))
-		{
-			foreach($this->transformed[$column] as $callback)
-			{
-				$result = $callback($result);
-			}
-		}
-		
-		if(isset($this->computed[$column]))
-		{
-			$result = call_user_func($this->computed[$column], $row);
-		}
-		
-		return $result;
+		return $row[$column];
 	}
 	
 	/**
@@ -256,9 +246,17 @@ abstract class AbstractStatement implements StatementInterface
 	 */
 	public function fetchRows($style = NULL)
 	{
+		return iterator_to_array($this->fetchRowsIterator($style));
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function fetchRowsIterator($style = NULL)
+	{
 		if($this->stmt === NULL)
 		{
-			return [];
+			return;
 		}
 		
 		switch($style)
@@ -276,17 +274,18 @@ abstract class AbstractStatement implements StatementInterface
 		
 		if($this->enhanced)
 		{
-			$result = [];
-			
 			while(false !== ($row = $this->stmt->fetch($style)))
 			{
-				$result[] = $this->transformRow($row);
+				yield $this->transformRow($row);
 			}
-			
-			return $result;
 		}
-		
-		return $this->stmt->fetchAll($style);
+		else
+		{
+			while(false !== ($row = $this->stmt->fetch($style)))
+			{
+				yield $row;
+			}
+		}
 	}
 	
 	/**
@@ -294,39 +293,52 @@ abstract class AbstractStatement implements StatementInterface
 	 */
 	public function fetchColumns($column)
 	{
+		return iterator_to_array($this->fetchColumnsIterator($column));
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function fetchColumnsIterator($column)
+	{
 		if($this->stmt === NULL)
 		{
-			return [];
+			return;
 		}
 		
 		$transform = (!empty($this->computed[$column]) || !empty($this->transformed[$column]));
 		
 		if(!$transform && is_integer($column))
 		{
-			return $this->stmt->fetchAll(\PDO::FETCH_COLUMN, $column);
-		}
-		
-		$result = [];
-		
-		while(false !== ($row = $this->stmt->fetch()))
-		{
-			if(!empty($this->transformed[$column]))
+			while(false !== ($col = $this->stmt->fetch(\PDO::FETCH_COLUMN, $column)))
 			{
-				foreach($this->transformed[$column] as $callback)
+				yield $col;
+			}
+		}
+		else
+		{
+			$computed = isset($this->computed[$column]) ? $this->computed[$column] : NULL;
+			
+			while(false !== ($row = $this->stmt->fetch()))
+			{
+				if(!empty($this->transformed[$column]))
 				{
-					$row[$column] = $callback($row[$column]);
+					foreach($this->transformed[$column] as $callback)
+					{
+						$row[$column] = $callback($row[$column], $row);
+					}
+				}
+				
+				if($computed === NULL)
+				{
+					yield $row[$column];
+				}
+				else
+				{
+					yield $computed($row);
 				}
 			}
-			
-			if(isset($this->computed[$column]))
-			{
-				$row[$column] = call_user_func($this->computed[$column], $row);
-			}
-			
-			$result[] = $row[$column];
 		}
-		
-		return $result;
 	}
 	
 	/**
@@ -334,9 +346,17 @@ abstract class AbstractStatement implements StatementInterface
 	 */
 	public function fetchMap($key, $value)
 	{
+		return iterator_to_array($this->fetchMapIterator($key, $value), true);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function fetchMapIterator($key, $value)
+	{
 		if($this->stmt === NULL)
 		{
-			return [];
+			return;
 		}
 		
 		if(is_integer($key) && is_integer($value))
@@ -352,40 +372,33 @@ abstract class AbstractStatement implements StatementInterface
 			$style = \PDO::FETCH_BOTH;
 		}
 		
-		$result = [];
-		
 		if($this->enhanced)
 		{
-			while(false !== ($row = $this->transformRow($this->stmt->fetch())))
+			while(false !== ($row = $this->stmt->fetch($style)))
 			{
-				$result[$row[$key]] = $row[$value];
+				$row = $this->transformRow($row);
+				
+				yield $row[$key] => $row[$value];
 			}
 		}
 		else
 		{
 			while(false !== ($row = $this->stmt->fetch($style)))
 			{
-				$result[$row[$key]] = $row[$value];
+				yield $row[$key] => $row[$value];
 			}
 		}
-		
-		return $result;
 	}
 	
-	protected function transformRow($row)
+	protected function transformRow(array $row)
 	{
-		if(!is_array($row))
-		{
-			return $row;
-		}
-		
 		foreach($row as $k => & $v)
 		{
 			if(!empty($this->transformed[$k]))
 			{
 				foreach($this->transformed[$k] as $trans)
 				{
-					$v = $trans($v);
+					$v = $trans($v, $row);
 				}
 			}
 		}

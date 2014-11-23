@@ -128,12 +128,28 @@ interface StatementInterface
 	public function fetchRows($style = NULL);
 	
 	/**
+	 * Fetch remaining rows from the query result using an ietrator.
+	 *
+	 * @param mixed $style Fetch style, one of the DB::FETCH_* constants.
+	 * @return \Iterator An iterator returning remaining result rows (might be empty when no more rows are available).
+	 */
+	public function fetchRowsIterator($style = NULL);
+	
+	/**
 	 * Fetch all remaining values of the specified column from the query result.
 	 * 
 	 * @param mixed $column 0-indexed colum number or alias name.
-	 * @return array Values of the speocified colum (may be empty when no more rows are available).
+	 * @return array Values of the specified colum (may be empty when no more rows are available).
 	 */
 	public function fetchColumns($column);
+	
+	/**
+	 * Fetch the given column from all remaining result rows using an iterator.
+	 *
+	 * @param mixed $column 0-indexed colum number or alias name.
+	 * @return \Iterator Values of the specified column (may be empty when no more rows are available).
+	 */
+	public function fetchColumnsIterator($column);
 	
 	/**
 	 * Fetch all remaining key-value pairs from the query reuslt into a map.
@@ -143,4 +159,13 @@ interface StatementInterface
 	 * @return array Map being populated from fetched rows (may be empty when no more rows are available).
 	 */
 	public function fetchMap($key, $value);
+	
+	/**
+	 * Fetch all remaining key-value pairs from the query reuslt into a map that is returned row-by-row using a generator.
+	 *
+	 * @param mixed $key 0-indexed colum number or alias name of the column being used to populate the key.
+	 * @param mixed $value 0-indexed colum number or alias name of the column being used to populate the value.
+	 * @return \Iterator Map being populated from fetched rows (may be empty when no more rows are available).
+	 */
+	public function fetchMapIterator($key, $value);
 }
