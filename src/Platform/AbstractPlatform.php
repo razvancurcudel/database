@@ -30,6 +30,8 @@ abstract class AbstractPlatform
 		$this->conn = $conn;
 	}
 	
+	public abstract function flushDatabase();
+	
 	public abstract function hasTable($tableName);
 	
 	public abstract function createTable(Table $table);
@@ -40,7 +42,7 @@ abstract class AbstractPlatform
 	
 	public abstract function addColumn(Table $table, Column $col);
 	
-	public abstract function createIndex(Table $table, Index $index);
+	public abstract function addIndex(Table $table, Index $index);
 	
 	public abstract function dropIndex($tableName, array $columns);
 	

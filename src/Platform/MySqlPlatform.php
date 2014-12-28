@@ -11,20 +11,22 @@
 
 namespace KoolKode\Database\Platform;
 
+use KoolKode\Database\DB;
 use KoolKode\Database\Schema\Column;
 use KoolKode\Database\Schema\ForeignKey;
 use KoolKode\Database\Schema\Index;
 use KoolKode\Database\Schema\Table;
 
-class SqlitePlatform extends AbstractPlatform
+class MySqlPlatform extends AbstractPlatform
 {
 	public function flushDatabase()
 	{
-		$this->conn->execute("PRAGMA foreign_keys = OFF");
+		$this->conn->execute("SET FOREIGN_KEY_CHECKS = 0");
 		
 		try
 		{
-			$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `name` NOT GLOB 'sqlite_*' AND `type` = 'view'");
+			$stmt = $this->conn->prepare("SHOW FULL TABLES WHERE TABLE_TYPE LIKE :type");
+			$stmt->bindValue('type', 'VIEW');
 			$stmt->execute();
 			$views = $stmt->fetchColumns(0);
 
@@ -36,10 +38,10 @@ class SqlitePlatform extends AbstractPlatform
 				$this->conn->execute($sql);
 			}
 			
-			$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `name` NOT GLOB 'sqlite_*' AND `type` = 'table'");
+			$stmt = $this->conn->prepare("SHOW TABLES");
 			$stmt->execute();
 			$tables = $stmt->fetchColumns(0);
-				
+			
 			if(!empty($tables))
 			{
 				$sql = "DROP TABLE " . implode(', ', array_map(function($table) {
@@ -47,10 +49,12 @@ class SqlitePlatform extends AbstractPlatform
 				}, $tables));
 				$this->conn->execute($sql);
 			}
+			
+			// TODO: PostgreSQL needs this query instead of key checks config: DROP TABLE t1, t2, t3, ... CASCADE
 		}
 		finally
 		{
-			$this->conn->execute("PRAGMA foreign_keys = ON");
+			$this->conn->execute("SET FOREIGN_KEY_CHECKS = 1");
 		}
 	}
 	
@@ -58,14 +62,13 @@ class SqlitePlatform extends AbstractPlatform
 	{
 		$tn = $this->conn->applyPrefix($tableName);
 		
-		$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `type` = 'table' AND `name` = :name");
-		$stmt->bindValue('name', $tn);
+		$stmt = $this->conn->prepare("SHOW TABLES");
 		$stmt->execute();
 
 		$found = [];
-		foreach($stmt->fetchRows() as $row)
+		foreach($stmt->fetchRows(DB::FETCH_NUM) as $row)
 		{
-			$found[] = strtolower($row['name']);
+			$found[] = strtolower($row[0]);
 		}
 		
 		return in_array(strtolower($tn), $found);
@@ -82,25 +85,29 @@ class SqlitePlatform extends AbstractPlatform
 		
 		$sql = rtrim($sql, ', ');
 		
+		foreach($table->getPendingIndexes() as $index)
+		{
+			$cols = array_map(function($col) {
+				return $this->conn->quoteIdentifier($col);
+			}, $index->getColumns());
+			
+			$sql .= ', ' . $this->getIndexDefinitionSql($table, $index) . ' (' . implode(', ', $cols) . ')';
+		}
+		
 		foreach($table->getPendingForeignKeys() as $key)
 		{
 			$sql .= ', ' . $this->getForeignKeyDefinitionSql($key);
 		}
 		
-		$sql .= ') ';
+		$sql .= ') ENGINE=InnoDB COLLATE=utf8_unicode_ci';
 		
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
-		
-		foreach($table->getPendingIndexes() as $index)
-		{
-			$this->addIndex($table, $index);
-		}
 	}
 	
 	public function renameTable($tableName, $newName)
 	{
-		$sql = sprintf("ALTER TABLE %s RENAME TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($newName));
+		$sql = sprintf("RENAME TABLE %s TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($newName));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -115,7 +122,7 @@ class SqlitePlatform extends AbstractPlatform
 	public function addColumn(Table $table, Column $col)
 	{
 		$sql = sprintf(
-			"ALTER TABLE %s ADD COLUMN %s %s",
+			"ALTER TABLE %s ADD %s %s",
 			$this->conn->quoteIdentifier($table->getName()),
 			$this->conn->quoteIdentifier($col->getName()),
 			$this->getColumnDefinitionSql($col)
@@ -129,7 +136,7 @@ class SqlitePlatform extends AbstractPlatform
 			return $this->conn->quoteIdentifier($col);
 		}, $index->getColumns());
 		
-		$sql = sprintf('CREATE %s ON %s (%s)', $this->getIndexDefinitionSql($table, $index), $this->conn->quoteIdentifier($table->getName()), \implode(', ', $cols));
+		$sql = sprintf('ALTER TABLE %s ADD %s (%s)', $this->conn->quoteIdentifier($table->getName()), $this->getIndexDefinitionSql($table, $index), implode(', ', $cols));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -138,45 +145,15 @@ class SqlitePlatform extends AbstractPlatform
 	{
 		$index = new Index($columns);
 		
-		$sql = sprintf('DROP INDEX %s', $this->conn->quoteIdentifier($index->getName($tableName)));
+		$sql = sprintf('ALTER TABLE %s DROP INDEX %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($index->getName($tableName)));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
 	
 	public function addForeignKey(Table $table, ForeignKey $key)
 	{
-		$stmt = $this->conn->prepare("SELECT `sql` FROM `sqlite_master` WHERE `type` = :type AND `tbl_name` = :name");
-		$stmt->bindValue('type', 'table');
-		$stmt->bindValue('name', $this->conn->applyPrefix($table->getName()));
-		$stmt->execute();
-		
-		$tmpName = $table->getName() . '_tmp_';
-		$sql = rtrim($stmt->fetchNextColumn('sql'), ' )');
-		
-		if('' === trim($sql))
-		{
-			throw new \RuntimeException(sprintf('Database table "%s" not found', $table->getName()));
-		}
-		
-		$stmt = $this->conn->prepare(sprintf("PRAGMA table_info(%s)", $this->conn->quoteIdentifier($table->getName())));
-		$stmt->execute();
-		
-		$this->conn->execute(sprintf('ALTER TABLE %s RENAME TO %s', $this->conn->quoteIdentifier($table->getName()), $this->conn->quoteIdentifier($tmpName)));
-		
-		$cols = array_map(function($val) { return $this->conn->quoteIdentifier($val); }, (array)$stmt->fetchColumns('name'));
-		
-		$this->conn->execute($sql . ', ' . $this->getForeignKeyDefinitionSql($key) . ')');
-		
-		$sql = sprintf(
-			"INSERT INTO %s (%s) SELECT %s FROM %s",
-			$this->conn->quoteIdentifier($table->getName()),
-			implode(', ', $cols),
-			implode(', ', $cols),
-			$this->conn->quoteIdentifier($tmpName)
-		);
+		$sql = sprintf('ALTER TABLE %s ADD %s', $this->conn->quoteIdentifier($table->getName()), $this->getForeignKeyDefinitionSql($key));
 		$this->conn->execute($sql);
-		
-		$this->conn->execute(sprintf("DROP TABLE %s", $this->conn->quoteIdentifier($tmpName)));
 	}
 	
 	protected function getDatabaseType($type)
@@ -184,17 +161,17 @@ class SqlitePlatform extends AbstractPlatform
 		switch($type)
 		{
 			case Column::TYPE_BIG_INT:
-				return ['name' => 'bigint'];
+				return ['name' => 'bigint', 'unsigned' => false];
 			case Column::TYPE_BLOB:
-				return ['name' => 'blob'];
+				return ['name' => 'longblob'];
 			case Column::TYPE_CHAR:
 				return ['name' => 'char', 'limit' => 250];
 			case Column::TYPE_DOUBLE:
 				return ['name' => 'double'];
 			case Column::TYPE_INT:
-				return ['name' => 'integer'];
+				return ['name' => 'int', 'unsigned' => false];
 			case Column::TYPE_TEXT:
-				return ['name' => 'text'];
+				return ['name' => 'longtext'];
 			case Column::TYPE_VARCHAR:
 				return ['name' => 'varchar', 'limit' => 250];
 		}
@@ -226,6 +203,11 @@ class SqlitePlatform extends AbstractPlatform
 			$sql .= sprintf('(%u)', ($limit === NULL) ? $type['limit'] : min($limit, $type['limit']));
 		}
 		
+		if(array_key_exists('unsigned', $type) && $col->isUnsigned())
+		{
+			$sql .= ' UNSIGNED';
+		}
+		
 		$sql .= $col->isNullable() ? ' NULL' : ' NOT NULL';
 		
 		if($col->hasDefault())
@@ -239,7 +221,7 @@ class SqlitePlatform extends AbstractPlatform
 			
 			if($col->isIdentity())
 			{
-				$sql .= ' AUTOINCREMENT';
+				$sql .= ' AUTO_INCREMENT';
 			}
 		}
 		

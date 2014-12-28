@@ -54,6 +54,11 @@ class Column
 		return array_key_exists('limit', $this->options) ? (int)$this->options['limit'] : NULL;
 	}
 	
+	public function isUnsigned()
+	{
+		return !empty($this->options['unsigned']);
+	}
+	
 	public function isPrimaryKey()
 	{
 		return !empty($this->options['primary_key']) || !empty($this->options['identity']);

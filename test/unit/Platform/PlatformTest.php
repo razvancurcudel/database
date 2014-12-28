@@ -11,12 +11,13 @@
 
 namespace KoolKode\Database\Platform;
 
+use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\ConnectionManager;
+use KoolKode\Database\DB;
 use KoolKode\Database\Schema\Table;
 use KoolKode\Database\Test\DatabaseTestCase;
-use KoolKode\Database\ConnectionInterface;
 
-abstract class BasePlatformTest extends DatabaseTestCase
+class PlatformTest extends DatabaseTestCase
 {
 	protected $conn;
 	
@@ -32,9 +33,29 @@ abstract class BasePlatformTest extends DatabaseTestCase
 	
 		$this->conn = (new ConnectionManager())->createPDOConnection($dsn, $username, $password);
 		$this->platform = $this->createPlatform($this->conn);
+		
+		$this->platform->flushDatabase();
 	}
 	
-	protected abstract function createPlatform(ConnectionInterface $conn);
+	protected function tearDown()
+	{
+		$this->platform->flushDatabase();
+		
+		parent::tearDown();
+	}
+	
+	protected function createPlatform(ConnectionInterface $conn)
+	{
+		switch($conn->getDriverName())
+		{
+			case DB::DRIVER_MYSQL:
+				return new MySqlPlatform($conn);
+			case DB::DRIVER_SQLITE:
+				return new SqlitePlatform($conn);
+		}
+		
+		$this->fail('No platform available for DB driver: ' . $conn->getDriverName());
+	}
 	
 	public function testTableCreation()
 	{
@@ -55,7 +76,11 @@ abstract class BasePlatformTest extends DatabaseTestCase
 		$this->assertTrue($this->platform->hasTable('#__test2'));
 		
 		$test1->addColumn('t2_id', 'int', ['default' => NULL]);
+		$test1->addIndex(['t2_id']);
 		$test1->addForeignKey(['t2_id'], '#__test2', ['id']);
 		$test1->save();
+		
+		$this->platform->dropTable('#__test1');
+		$this->platform->dropTable('#__test2');
 	}
 }

@@ -107,6 +107,11 @@ class Table
 			$this->platform->addColumn($this, $col);
 		}
 		
+		foreach($this->indexes as $index)
+		{
+			$this->platform->addIndex($this, $index);
+		}
+		
 		foreach($this->foreignKeys as $key)
 		{
 			$this->platform->addForeignKey($this, $key);
