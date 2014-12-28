@@ -353,4 +353,12 @@ abstract class AbstractConnection implements ConnectionInterface
 		
 		return '"' . str_replace('"', '\\"', $identifier) . '"';
 	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function applyPrefix($value, $prefix = NULL)
+	{
+		return str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $value);
+	}
 }

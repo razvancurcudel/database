@@ -142,10 +142,29 @@ interface ConnectionInterface
 	public function lastInsertId($sequenceName = NULL, $prefix = NULL);
 	
 	/**
+	 * Quote the given value for safe use in a query.
+	 * 
+	 * WARNING: Never use this method when you could use param placeholders instead!
+	 * 
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	public function quote($value);
+	
+	/**
 	 * Quote the given name to be used as DB-specific object identifier.
 	 * 
 	 * @param string $identifier
 	 * @return string
 	 */
 	public function quoteIdentifier($identifier);
+	
+	/**
+	 * Will expand the schema object prefix "#__" in the given string input to the actual prefix being used.
+	 * 
+	 * @param string $value
+	 * @param string $prefix
+	 * @return string
+	 */
+	public function applyPrefix($value, $prefix = NULL);
 }

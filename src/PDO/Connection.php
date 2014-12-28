@@ -182,6 +182,14 @@ class Connection extends AbstractConnection
 		return $this->pdo->lastInsertId($this->prepareSql($sequenceName, $prefix));
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function quote($value)
+	{
+		return $this->pdo->quote($value);
+	}
+	
 	protected function initializeSqlite()
 	{
 		$this->execute("PRAGMA foreign_keys = ON");

@@ -129,6 +129,14 @@ class Connection extends AbstractConnection
 	/**
 	 * {@inheritdoc}
 	 */
+	public function quote($value)
+	{
+		return $this->conn->quote($value);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function quoteIdentifier($identifier)
 	{
 		return $this->conn->quoteIdentifier($identifier);

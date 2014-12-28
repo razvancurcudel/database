@@ -176,8 +176,24 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function quote($value)
+	{
+		return $this->conn->quote($value);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function quoteIdentifier($identifier)
 	{
 		return $this->conn->quoteIdentifier($identifier);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function applyPrefix($value, $prefix = NULL)
+	{
+		return $this->conn->applyPrefix($value, $prefix);
 	}
 }
