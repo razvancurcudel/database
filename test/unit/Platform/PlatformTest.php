@@ -13,7 +13,6 @@ namespace KoolKode\Database\Platform;
 
 use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\ConnectionManager;
-use KoolKode\Database\DB;
 use KoolKode\Database\Schema\Table;
 use KoolKode\Database\Test\DatabaseTestCase;
 
@@ -32,7 +31,7 @@ class PlatformTest extends DatabaseTestCase
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 	
 		$this->conn = (new ConnectionManager())->createPDOConnection($dsn, $username, $password);
-		$this->platform = $this->createPlatform($this->conn);
+		$this->platform = $this->conn->getPlatform();
 		
 		$this->platform->flushDatabase();
 	}
@@ -42,19 +41,6 @@ class PlatformTest extends DatabaseTestCase
 		$this->platform->flushDatabase();
 		
 		parent::tearDown();
-	}
-	
-	protected function createPlatform(ConnectionInterface $conn)
-	{
-		switch($conn->getDriverName())
-		{
-			case DB::DRIVER_MYSQL:
-				return new MySqlPlatform($conn);
-			case DB::DRIVER_SQLITE:
-				return new SqlitePlatform($conn);
-		}
-		
-		$this->fail('No platform available for DB driver: ' . $conn->getDriverName());
 	}
 	
 	public function testTableCreation()

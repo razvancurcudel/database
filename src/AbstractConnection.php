@@ -61,6 +61,22 @@ abstract class AbstractConnection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getPlatform()
+	{
+		switch($this->driverName)
+		{
+			case DB::DRIVER_MYSQL:
+				return new Platform\MySqlPlatform($this);
+			case DB::DRIVER_SQLITE:
+				return new Platform\SqlitePlatform($this);
+		}
+		
+		throw new \RuntimeException(sprintf('No platform found for DB driver "%s"', $this->driverName));
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function inTransaction()
 	{
 		return $this->transLevel > 0;

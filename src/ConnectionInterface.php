@@ -11,6 +11,8 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Database\Platform\AbstractPlatform;
+
 /**
  * Contract for a database connection that might by decorated.
  * 
@@ -24,6 +26,13 @@ interface ConnectionInterface
 	 * @return string
 	 */
 	public function getDriverName();
+	
+	/**
+	 * Get the underlying DB platform.
+	 * 
+	 * @return AbstractPlatform
+	 */
+	public function getPlatform();
 	
 	/**
 	 * Check if the given option is available on the connection.

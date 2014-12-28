@@ -61,6 +61,14 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getPlatform()
+	{
+		return $this->conn->getPlatform();
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function hasOption($name)
 	{
 		return $this->conn->hasOption($name);
