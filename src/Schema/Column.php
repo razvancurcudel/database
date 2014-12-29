@@ -19,7 +19,9 @@ class Column
 	const TYPE_INT = 'int';
 	const TYPE_BIG_INT = 'bigint';
 	const TYPE_DOUBLE = 'double';
+	const TYPE_BINARY = 'binary';
 	const TYPE_BLOB = 'blob';
+	const TYPE_UUID = 'uuid';
 	
 	protected $name;
 	
@@ -89,11 +91,13 @@ class Column
 		switch((string)$type)
 		{
 			case self::TYPE_BIG_INT:
+			case self::TYPE_BINARY:
 			case self::TYPE_BLOB:
 			case self::TYPE_CHAR:
 			case self::TYPE_DOUBLE:
 			case self::TYPE_INT:
 			case self::TYPE_TEXT:
+			case self::TYPE_UUID:
 			case self::TYPE_VARCHAR:
 				return (string)$type;
 		}

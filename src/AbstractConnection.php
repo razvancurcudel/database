@@ -67,6 +67,8 @@ abstract class AbstractConnection implements ConnectionInterface
 		{
 			case DB::DRIVER_MYSQL:
 				return new Platform\MySqlPlatform($this);
+			case DB::DRIVER_POSTGRESQL:
+				return new Platform\PostgreSqlPlatform($this);
 			case DB::DRIVER_SQLITE:
 				return new Platform\SqlitePlatform($this);
 		}

@@ -23,6 +23,8 @@ class Table
 	
 	protected $foreignKeys = [];
 	
+	protected $options = [];
+	
 	protected $platform;
 	
 	public function __construct($name, AbstractPlatform $platform)
@@ -34,6 +36,18 @@ class Table
 	public function getName()
 	{
 		return $this->name;
+	}
+	
+	public function setOption($name, $value)
+	{
+		$this->options[(string)$name] = $value;
+		
+		return $this;
+	}
+	
+	public function getOptions()
+	{
+		return $this->options;
 	}
 	
 	public function getPendingColumns()

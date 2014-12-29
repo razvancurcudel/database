@@ -17,42 +17,32 @@ use KoolKode\Database\Schema\ForeignKey;
 use KoolKode\Database\Schema\Index;
 use KoolKode\Database\Schema\Table;
 
-class MySqlPlatform extends AbstractPlatform
+class PostgreSqlPlatform extends AbstractPlatform
 {
 	public function flushDatabase()
 	{
-		$this->conn->execute("SET FOREIGN_KEY_CHECKS = 0");
+		$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`views` WHERE `table_schema` = current_schema()");
+		$stmt->execute();
+		$views = $stmt->fetchColumns(0);
 		
-		try
+		if(!empty($views))
 		{
-			$stmt = $this->conn->prepare("SHOW FULL TABLES WHERE TABLE_TYPE LIKE :type");
-			$stmt->bindValue('type', 'VIEW');
-			$stmt->execute();
-			$views = $stmt->fetchColumns(0);
-
-			if(!empty($views))
-			{
-				$sql = "DROP VIEW IF EXISTS " . implode(', ', array_map(function($view) {
-					return $this->conn->quoteIdentifier($view);
-				}, $views));
-				$this->conn->execute($sql);
-			}
-			
-			$stmt = $this->conn->prepare("SHOW TABLES");
-			$stmt->execute();
-			$tables = $stmt->fetchColumns(0);
-			
-			if(!empty($tables))
-			{
-				$sql = "DROP TABLE IF EXISTS " . implode(', ', array_map(function($table) {
-					return $this->conn->quoteIdentifier($table);
-				}, $tables));
-				$this->conn->execute($sql);
-			}
+			$sql = "DROP VIEW IF EXISTS " . implode(', ', array_map(function($view) {
+				return $this->conn->quoteIdentifier($view);
+			}, $views)) . ' CASCADE';
+			$this->conn->execute($sql);
 		}
-		finally
+		
+		$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`tables` WHERE `table_schema` = current_schema()");
+		$stmt->execute();
+		$tables = $stmt->fetchColumns(0);
+			
+		if(!empty($tables))
 		{
-			$this->conn->execute("SET FOREIGN_KEY_CHECKS = 1");
+			$sql = "DROP TABLE IF EXISTS " . implode(', ', array_map(function($table) {
+				return $this->conn->quoteIdentifier($table);
+			}, $tables)) . ' CASCADE';
+			$this->conn->execute($sql);
 		}
 	}
 	
@@ -60,7 +50,7 @@ class MySqlPlatform extends AbstractPlatform
 	{
 		$tn = $this->conn->applyPrefix($tableName);
 		
-		$stmt = $this->conn->prepare("SHOW TABLES");
+		$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`tables` WHERE `table_schema` = current_schema()");
 		$stmt->execute();
 
 		$found = [];
@@ -74,12 +64,6 @@ class MySqlPlatform extends AbstractPlatform
 
 	public function createTable(Table $table)
 	{
-		$options = [
-			'engine' => 'InnoDB',
-			'collate' => 'utf8_unicode_ci'
-		];
-		$options = array_merge($options, array_change_key_case($table->getOptions(), CASE_LOWER));
-		
 		$sql = 'CREATE TABLE ' . $this->conn->quoteIdentifier($table->getName()) . ' ( ';
 		
 		foreach($table->getPendingColumns() as $col)
@@ -89,15 +73,6 @@ class MySqlPlatform extends AbstractPlatform
 		
 		$sql = rtrim($sql, ', ');
 		
-		foreach($table->getPendingIndexes() as $index)
-		{
-			$cols = array_map(function($col) {
-				return $this->conn->quoteIdentifier($col);
-			}, $index->getColumns());
-			
-			$sql .= ', ' . $this->getIndexDefinitionSql($table, $index) . ' (' . implode(', ', $cols) . ')';
-		}
-		
 		foreach($table->getPendingForeignKeys() as $key)
 		{
 			$sql .= ', ' . $this->getForeignKeyDefinitionSql($table->getName(), $key);
@@ -105,13 +80,13 @@ class MySqlPlatform extends AbstractPlatform
 		
 		$sql .= ')';
 		
-		foreach($options as $k => $v)
-		{
-			$sql .= sprintf(' %s=%s', strtoupper($k), $v);
-		}
-		
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
+		
+		foreach($table->getPendingIndexes() as $index)
+		{
+			$this->addIndex($table, $index);
+		}
 	}
 	
 	public function renameTable($tableName, $newName)
@@ -123,7 +98,7 @@ class MySqlPlatform extends AbstractPlatform
 	
 	public function dropTable($tableName)
 	{
-		$sql = sprintf('DROP TABLE %s', $this->conn->quoteIdentifier($tableName));
+		$sql = sprintf('DROP TABLE %s CASCADE', $this->conn->quoteIdentifier($tableName));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -145,7 +120,13 @@ class MySqlPlatform extends AbstractPlatform
 			return $this->conn->quoteIdentifier($col);
 		}, $index->getColumns());
 		
-		$sql = sprintf('ALTER TABLE %s ADD %s (%s)', $this->conn->quoteIdentifier($table->getName()), $this->getIndexDefinitionSql($table, $index), implode(', ', $cols));
+		$sql = sprintf(
+			'CREATE%s INDEX %s ON %s (%s)',
+			$index->isUnique() ? ' UNIQUE' : '',
+			$this->conn->quoteIdentifier($index->getName($table->getName())),
+			$this->conn->quoteIdentifier($table->getName()),
+			implode(', ', $cols)
+		);
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -172,19 +153,19 @@ class MySqlPlatform extends AbstractPlatform
 			case Column::TYPE_BIG_INT:
 				return ['name' => 'bigint', 'unsigned' => false];
 			case Column::TYPE_BINARY:
-				return ['name' => 'binary', 'limit' => 250];
+				return ['name' => 'bytea'];
 			case Column::TYPE_BLOB:
-				return ['name' => 'longblob'];
+				return ['name' => 'bytea'];
 			case Column::TYPE_CHAR:
 				return ['name' => 'char', 'limit' => 250];
 			case Column::TYPE_DOUBLE:
-				return ['name' => 'double'];
+				return ['name' => 'double precision'];
 			case Column::TYPE_INT:
-				return ['name' => 'int', 'unsigned' => false];
+				return ['name' => 'integer', 'unsigned' => false];
 			case Column::TYPE_TEXT:
-				return ['name' => 'longtext'];
+				return ['name' => 'text'];
 			case Column::TYPE_UUID:
-				return ['name' => 'binary', 'limit' => 16];
+				return ['name' => 'uuid'];
 			case Column::TYPE_VARCHAR:
 				return ['name' => 'varchar', 'limit' => 250];
 		}
@@ -209,16 +190,23 @@ class MySqlPlatform extends AbstractPlatform
 		$type = $this->getDatabaseType($col->getType());
 		$limit = $col->getLimit();
 		
-		$sql = strtoupper($type['name']);
-		
-		if(NULL !== $limit || array_key_exists('limit', $type))
+		if($col->isIdentity())
 		{
-			$sql .= sprintf('(%u)', ($limit === NULL) ? $type['limit'] : min($limit, $type['limit']));
+			$sql = 'SERIAL';
 		}
-		
-		if(array_key_exists('unsigned', $type) && $col->isUnsigned())
+		else
 		{
-			$sql .= ' UNSIGNED';
+			$sql = strtoupper($type['name']);
+			
+			if(NULL !== $limit || array_key_exists('limit', $type))
+			{
+				$sql .= sprintf('(%u)', ($limit === NULL) ? $type['limit'] : min($limit, $type['limit']));
+			}
+			
+			if(array_key_exists('unsigned', $type) && $col->isUnsigned())
+			{
+				$sql .= ' UNSIGNED';
+			}
 		}
 		
 		$sql .= $col->isNullable() ? ' NULL' : ' NOT NULL';
@@ -231,11 +219,6 @@ class MySqlPlatform extends AbstractPlatform
 		if($col->isPrimaryKey())
 		{
 			$sql .= ' PRIMARY KEY';
-			
-			if($col->isIdentity())
-			{
-				$sql .= ' AUTO_INCREMENT';
-			}
 		}
 		
 		return $sql;
@@ -255,7 +238,7 @@ class MySqlPlatform extends AbstractPlatform
 		$cols = array_map($quote, $key->getColumns());
 		$ref = array_map($quote, $key->getRefColumns());
 		
-		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($tableName);
+		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($key->getName($tableName));
 		$sql .= ' FOREIGN KEY (' . implode(', ', $cols) . ') REFERENCES ';
 		$sql .= $this->conn->quoteIdentifier($key->getRefTable());
 		$sql .= ' (' . implode(', ', $ref) . ')';

@@ -71,6 +71,7 @@ class Statement extends AbstractStatement
 						{
 							$num = (int)$m[1];
 						}
+						
 						if($num >= 12)
 						{
 							$sql .= sprintf(' OFFSET %u ROWS FETCH NEXT %u ROWS ONLY', $this->offset, $this->limit);
@@ -100,7 +101,7 @@ class Statement extends AbstractStatement
 						}
 						break;
 					default:
-						throw new \RuntimeException(sprintf('Limit / Ofsset support not implemented for driver "%s"', $this->conn->getDriverName()));
+						throw new \RuntimeException(sprintf('Limit / Offset support not implemented for driver "%s"', $this->conn->getDriverName()));
 				}
 			}
 			

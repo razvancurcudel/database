@@ -185,6 +185,8 @@ class SqlitePlatform extends AbstractPlatform
 		{
 			case Column::TYPE_BIG_INT:
 				return ['name' => 'bigint'];
+			case Column::TYPE_BINARY:
+				return ['name' => 'binary', 'limit' => 250];
 			case Column::TYPE_BLOB:
 				return ['name' => 'blob'];
 			case Column::TYPE_CHAR:
@@ -195,6 +197,8 @@ class SqlitePlatform extends AbstractPlatform
 				return ['name' => 'integer'];
 			case Column::TYPE_TEXT:
 				return ['name' => 'text'];
+			case Column::TYPE_UUID:
+				return ['name' => 'binary', 'limit' => 16];
 			case Column::TYPE_VARCHAR:
 				return ['name' => 'varchar', 'limit' => 250];
 		}
