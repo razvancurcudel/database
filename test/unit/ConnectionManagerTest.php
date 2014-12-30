@@ -13,7 +13,7 @@ namespace KoolKode\Database;
 
 use KoolKode\Config\Configuration;
 use KoolKode\Config\YamlConfigurationLoader;
-use KoolKode\Database\Doctrine\Connection;
+use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\Test\DatabaseTestCase;
 
 class ConnectionManagerTest extends DatabaseTestCase
@@ -32,7 +32,7 @@ class ConnectionManagerTest extends DatabaseTestCase
 		$manager = new ConnectionManager(new Configuration($loader->load($file, $params)));
 		
 		$adapter = $manager->getAdapter('default');
-		$this->assertInstanceOf(Connection::class, $adapter);
+		$this->assertInstanceOf(ConnectionInterface::class, $adapter);
 		
 		$conn = $manager->getConnection('default');
 		$this->assertNotSame($adapter, $conn);
