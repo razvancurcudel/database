@@ -18,8 +18,8 @@ class MigrationManager
 		$projectDir = realpath(__DIR__ . '/../../../../../');
 		$migrationsDir = $projectDir . '/migration';
 		
-		$args = array_slice(preg_split("'\s+'", $_SERVER['argv']), 1);
-		\var_dump($args);
+		$args = array_slice($_SERVER['argv'], 1);
+		
 		if(is_dir($migrationsDir))
 		{
 			printf("MIGRATIONS:\n");
@@ -28,6 +28,11 @@ class MigrationManager
 			{
 				printf("- %s\n", $file);
 			}
+		}
+		
+		if(!empty($args) && $args[0] == 'generate')
+		{
+			echo 'Version' . gmdate('YmdHis') . '.php';
 		}
 	}
 }
