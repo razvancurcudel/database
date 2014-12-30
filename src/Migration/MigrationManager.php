@@ -18,7 +18,9 @@ class MigrationManager
 		$projectDir = realpath(__DIR__ . '/../../../../../');
 		$migrationsDir = $projectDir . '/migration';
 		
-		if(\is_dir($migrationsDir))
+		$args = array_slice(preg_split("'\s+'", $_SERVER['argv']), 1);
+		\var_dump($args);
+		if(is_dir($migrationsDir))
 		{
 			printf("MIGRATIONS:\n");
 			
@@ -27,7 +29,5 @@ class MigrationManager
 				printf("- %s\n", $file);
 			}
 		}
-		
-		\var_dump($projectDir);
 	}
 }
