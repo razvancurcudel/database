@@ -36,7 +36,7 @@ abstract class AbstractPlatform
 	
 	public abstract function createTable(Table $table);
 	
-	public abstract function renameTable($tableName, $newName);
+// 	public abstract function renameTable($tableName, $newName);
 	
 	public abstract function dropTable($tableName);
 	

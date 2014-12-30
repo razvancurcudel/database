@@ -114,12 +114,12 @@ class MySqlPlatform extends AbstractPlatform
 		$stmt->execute();
 	}
 	
-	public function renameTable($tableName, $newName)
-	{
-		$sql = sprintf("RENAME TABLE %s TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($newName));
-		$stmt = $this->conn->prepare($sql);
-		$stmt->execute();
-	}
+// 	public function renameTable($tableName, $newName)
+// 	{
+// 		$sql = sprintf("RENAME TABLE %s TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($newName));
+// 		$stmt = $this->conn->prepare($sql);
+// 		$stmt->execute();
+// 	}
 	
 	public function dropTable($tableName)
 	{
