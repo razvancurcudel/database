@@ -13,6 +13,7 @@ namespace KoolKode\Database\Migration;
 
 use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\Schema\Column;
+use KoolKode\Database\Schema\Table;
 
 class MigrationManager
 {
@@ -76,7 +77,7 @@ class MigrationManager
 		
 		if(!$platform->hasTable('#__kk_migrations'))
 		{
-			$table = $platform->createTable('#__kk_migrations');
+			$table = new Table('#__kk_migrations', $platform);
 			$table->addColumn('version', Column::TYPE_CHAR, ['limit' => 14, 'primary_key' => true]);
 			$table->addColumn('migrated', Column::TYPE_CHAR, ['limit' => 14]);
 			$table->addIndex(['migrated']);
