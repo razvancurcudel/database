@@ -213,7 +213,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 			
 			if(array_key_exists('unsigned', $type) && $col->isUnsigned())
 			{
-				$sql .= ' UNSIGNED';
+				$sql .= sprintf(' CHECK (%s >= 0)', $this->conn->quoteIdentifier($col->getName()));
 			}
 		}
 		
