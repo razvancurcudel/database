@@ -11,10 +11,12 @@
 
 namespace KoolKode\Database;
 
-use KoolKode\Database\Test\DatabaseTestCase;
+use KoolKode\Database\Test\DatabaseTestTrait;
 
-abstract class BaseConnectionTest extends DatabaseTestCase
+abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 {
+	use DatabaseTestTrait;
+	
 	/**
 	 * DB connection being tested.
 	 * 

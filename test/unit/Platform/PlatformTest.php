@@ -11,16 +11,15 @@
 
 namespace KoolKode\Database\Platform;
 
-use KoolKode\Database\ConnectionInterface;
-use KoolKode\Database\ConnectionManager;
 use KoolKode\Database\Schema\Column;
 use KoolKode\Database\Schema\Table;
-use KoolKode\Database\Test\DatabaseTestCase;
+use KoolKode\Database\Test\DatabaseTestTrait;
 use KoolKode\Util\UUID;
-use KoolKode\Database\PrefixConnectionDecorator;
 
-class PlatformTest extends DatabaseTestCase
+class PlatformTest extends \PHPUnit_Framework_TestCase
 {
+	use DatabaseTestTrait;
+	
 	/**
 	 * @var ConnectionInterface
 	 */
@@ -35,14 +34,9 @@ class PlatformTest extends DatabaseTestCase
 	{
 		parent::setUp();
 		
-		$dsn = (string)self::getEnvParam('DB_DSN', 'sqlite::memory:');
-		$username = self::getEnvParam('DB_USERNAME', NULL);
-		$password = self::getEnvParam('DB_PASSWORD', NULL);
-	
-		$this->conn = (new ConnectionManager())->createPDOConnection($dsn, $username, $password);
-		$this->conn = new PrefixConnectionDecorator($this->conn, 'tt_');
-		$this->platform = $this->conn->getPlatform();
+		$this->conn = static::createConnection('tt_');
 		
+		$this->platform = $this->conn->getPlatform();
 		$this->platform->flushDatabase();
 	}
 	

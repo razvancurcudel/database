@@ -14,10 +14,12 @@ namespace KoolKode\Database;
 use KoolKode\Config\Configuration;
 use KoolKode\Config\YamlConfigurationLoader;
 use KoolKode\Database\ConnectionInterface;
-use KoolKode\Database\Test\DatabaseTestCase;
+use KoolKode\Database\Test\DatabaseTestTrait;
 
-class ConnectionManagerTest extends DatabaseTestCase
+class ConnectionManagerTest extends \PHPUnit_Framework_TestCase
 {
+	use DatabaseTestTrait;
+	
 	public function testCanCreateManager()
 	{
 		$params = [
