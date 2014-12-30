@@ -26,26 +26,18 @@ class SqlitePlatform extends AbstractPlatform
 		{
 			$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `name` NOT GLOB 'sqlite_*' AND `type` = 'view'");
 			$stmt->execute();
-			$views = $stmt->fetchColumns(0);
-
-			if(!empty($views))
+			
+			foreach($stmt->fetchColumns(0) as $view)
 			{
-				$sql = "DROP VIEW " . implode(', ', array_map(function($view) {
-					return $this->conn->quoteIdentifier($view);
-				}, $views));
-				$this->conn->execute($sql);
+				$this->conn->execute("DROP VIEW " . $this->conn->quoteIdentifier($view));
 			}
 			
 			$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `name` NOT GLOB 'sqlite_*' AND `type` = 'table'");
 			$stmt->execute();
-			$tables = $stmt->fetchColumns(0);
-				
-			if(!empty($tables))
+			
+			foreach($stmt->fetchColumns(0) as $table)
 			{
-				$sql = "DROP TABLE " . implode(', ', array_map(function($table) {
-					return $this->conn->quoteIdentifier($table);
-				}, $tables));
-				$this->conn->execute($sql);
+				$this->conn->execute("DROP TABLE " . $this->conn->quoteIdentifier($table));
 			}
 		}
 		finally
