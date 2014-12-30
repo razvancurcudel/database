@@ -56,6 +56,6 @@ class ForeignKey
 	
 	public function getOnDelete()
 	{
-		return isset($this->options['delete']) ? strtoupper($this->options['delete']) : 'RESTRICT';		
+		return isset($this->options['delete']) ? strtoupper($this->options['delete']) : 'CASCADE';		
 	}
 }
