@@ -30,6 +30,16 @@ abstract class AbstractPlatform
 		$this->conn = $conn;
 	}
 	
+	public function getConnection()
+	{
+		return $this->conn;
+	}
+	
+	public function setConnection(ConnectionInterface $conn)
+	{
+		$this->conn = $conn;
+	}
+	
 	public abstract function flushDatabase();
 	
 	public abstract function hasTable($tableName);

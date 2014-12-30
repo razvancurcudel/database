@@ -17,6 +17,7 @@ use KoolKode\Database\Schema\Column;
 use KoolKode\Database\Schema\Table;
 use KoolKode\Database\Test\DatabaseTestCase;
 use KoolKode\Util\UUID;
+use KoolKode\Database\PrefixConnectionDecorator;
 
 class PlatformTest extends DatabaseTestCase
 {
@@ -39,6 +40,7 @@ class PlatformTest extends DatabaseTestCase
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 	
 		$this->conn = (new ConnectionManager())->createPDOConnection($dsn, $username, $password);
+		$this->conn = new PrefixConnectionDecorator($this->conn, 'tt_');
 		$this->platform = $this->conn->getPlatform();
 		
 		$this->platform->flushDatabase();

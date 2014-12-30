@@ -63,7 +63,10 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	 */
 	public function getPlatform()
 	{
-		return $this->conn->getPlatform();
+		$platform = $this->conn->getPlatform();
+		$platform->setConnection($this);
+		
+		return $platform;
 	}
 	
 	/**
