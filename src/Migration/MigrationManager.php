@@ -17,93 +17,157 @@ use KoolKode\Database\Schema\Table;
 
 class MigrationManager
 {
-	public function handleCommand()
+	protected $conn;
+	
+	protected $platform;
+	
+	public function __construct(ConnectionInterface $conn)
 	{
-		$projectDir = realpath(__DIR__ . '/../../../../../');
-		$migrationsDir = $projectDir . '/migration';
-		
-		$args = array_slice($_SERVER['argv'], 1);
-		
-		if(is_dir($migrationsDir))
-		{
-			printf("MIGRATIONS:\n");
-			
-			foreach(glob($migrationsDir . '/*.php') as $file)
-			{
-				printf("- %s\n", $file);
-			}
-		}
-		
-		if(!empty($args) && $args[0] == 'generate')
-		{
-			$date = new \DateTime('@' . time());
-			$date->setTimezone(new \DateTimeZone('UTC'));
-			
-			$class = 'Version' . $date->format('YmdHis');
-			$file = $class . '.php';
-			
-			$tpl = [
-				'###CLASS###' => $class,
-				'###DATE###' => $date->format('Y-m-d H:i:s') . ' UTC'
-			];
-			$code = strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl);
-			
-			file_put_contents($migrationsDir . '/' . $file, $code);
-		}
+		$this->conn = $conn;
+		$this->platform = $conn->getPlatform();
 	}
 	
-	public function migrateDirectoryUp($dir, ConnectionInterface $conn)
+	public function loadMigrations($dir)
 	{
-		$platform = $conn->getPlatform();
 		$migrations = [];
 		
 		foreach(glob($dir . '/*.php') as $file)
 		{
 			$file = new \SplFileInfo($file);
-			
+				
 			if(preg_match("'^(Version([0-9]{14}))\\.php$'i", $file->getFilename(), $m))
 			{
 				$className = $m[1];
 				$version = $m[2];
-				
+		
 				require_once $file->getPathname();
 				
-				$migration = new $className($version, $conn, $platform);
-				$migrations[$version] = $migration;
+				$migrations[$version] = new $className($version, $this->conn, $this->platform);
 			}
 		}
 		
 		ksort($migrations);
 		
-		if(!$platform->hasTable('#__kk_migrations'))
+		return $migrations;
+	}
+	
+	public function migrateDirectoryUp($dir)
+	{
+		foreach($this->loadMigrations($dir) as $migration)
 		{
-			$table = new Table('#__kk_migrations', $platform);
-			$table->addColumn('version', Column::TYPE_CHAR, ['limit' => 14, 'primary_key' => true]);
-			$table->addColumn('migrated', Column::TYPE_CHAR, ['limit' => 14]);
-			$table->addIndex(['migrated']);
-			$table->create();
+			$this->migrateUp($migration);
 		}
+	}
+	
+	public function migrateUp(AbstractMigration $migration)
+	{
+		$this->ensureMigrationTableExists();
 		
-		foreach($migrations as $migration)
-		{
-			$stmt = $conn->prepare("SELECT 1 FROM `#__kk_migrations` WHERE `version` = :version");
-			$stmt->bindValue('version', $migration->getVersion());
-			$stmt->execute();
+		$stmt = $this->conn->prepare("SELECT 1 FROM `#__kk_migrations` WHERE `version` = :version");
+		$stmt->bindValue('version', $migration->getVersion());
+		$stmt->execute();
 			
-			if(!$stmt->fetchNextColumn(0))
-			{
-				$migration->up();
-				
-				$conn->insert('#__kk_migrations', [
-					'version' => $migration->getVersion(),
-					'migrated' => gmdate('YmdHis')
-				]);
-			}
+		if(!$stmt->fetchNextColumn(0))
+		{
+			$migration->up();
+		
+			$this->conn->insert('#__kk_migrations', [
+				'version' => $migration->getVersion(),
+				'migrated' => gmdate('YmdHis')
+			]);
 		}
 	}
 	
 	public function migrateDirectoryDown($dir, ConnectionInterface $conn)
 	{
-		
+		foreach(array_reverse($this->loadMigrations($dir)) as $migration)
+		{
+			$this->migrateDown($migration);
+		}
+	}
+	
+	public function migrateDown(AbstractMigration $migration)
+	{
+		throw new \RuntimeException('Migrating down is not supported yet');
+	}
+	
+	protected function ensureMigrationTableExists()
+	{
+		if(!$this->platform->hasTable('#__kk_migrations'))
+		{
+			$table = new Table('#__kk_migrations', $this->platform);
+			$table->addColumn('version', 'bigint', ['limit' => 14, 'primary_key' => true]);
+			$table->addColumn('migrated', 'char', ['limit' => 14]);
+			$table->addIndex(['migrated']);
+			$table->create();
+		}
+	}
+	
+	public static function handleCommand()
+	{
+		$projectDir = realpath(__DIR__ . '/../../../../../');
+		$migrationsDir = $projectDir . '/migration';
+	
+		$args = array_slice($_SERVER['argv'], 1);
+	
+		if(empty($args))
+		{
+			printf("KoolKode DB Migration System\n\n");
+			printf("USAGE:\n");
+				
+			static::showCommandHelp();
+		}
+		else
+		{
+			switch(strtolower($args[0]))
+			{
+				case 'generate':
+					$date = new \DateTime('@' . time());
+					$date->setTimezone(new \DateTimeZone('UTC'));
+	
+					$class = 'Version' . $date->format('YmdHis');
+					$file = $class . '.php';
+	
+					$tpl = [
+						'###CLASS###' => $class,
+						'###DATE###' => $date->format('Y-m-d H:i:s') . ' UTC'
+					];
+					$code = strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl);
+					$target = str_replace('\\/', DIRECTORY_SEPARATOR, $migrationsDir . '/' . $file);
+	
+					printf("[%s]\n", $target);
+						
+					while(true)
+					{
+						printf("Generate migration file? [n] ");
+						$input = trim(fgets(STDIN));
+	
+						switch(strtolower($input))
+						{
+							case '':
+							case 'n':
+							case 'no':
+								return;
+							case 'y':
+							case 'yes':
+								file_put_contents($target, $code);
+								printf("+ Migration file generated.\n");
+								break 2;
+							default:
+								printf("Invalid input, accepted inputs are [y] [yes] [n] [no]\n");
+						}
+					}
+					break;
+				default:
+					printf("Unsupported command: \"%s\"\n", $args[0]);
+						
+					static::showCommandHelp();
+			}
+		}
+	}
+	
+	protected static function showCommandHelp()
+	{
+		printf("migration generate - Create a new Migration PHP file in the \"migration\" directory of the project.\n");
 	}
 }

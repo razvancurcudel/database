@@ -6,5 +6,4 @@ $vendorDir = dirname(dirname(dirname(realpath(__DIR__))));
 
 require $vendorDir . '/autoload.php';
 
-$manager = new MigrationManager();
-$manager->handleCommand();
+MigrationManager::handleCommand();
