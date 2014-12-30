@@ -224,7 +224,14 @@ class PostgreSqlPlatform extends AbstractPlatform
 			
 			if(array_key_exists('unsigned', $type) && $col->isUnsigned())
 			{
-				$sql .= sprintf(' CHECK (%s >= 0)', $this->conn->quoteIdentifier($col->getName()));
+				if($col->isNullable())
+				{
+					$sql .= sprintf(' CHECK (%s IS NULL OR %s >= 0)', $this->conn->quoteIdentifier($col->getName()), $this->conn->quoteIdentifier($col->getName()));
+				}
+				else
+				{
+					$sql .= sprintf(' CHECK (%s >= 0)', $this->conn->quoteIdentifier($col->getName()));
+				}
 			}
 		}
 		
