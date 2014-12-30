@@ -86,7 +86,8 @@ class PlatformTest extends DatabaseTestCase
 			'title' => 'Entry 1'
 		]);
 		
-		$stmt = $this->conn->prepare("SELECT * FROM `#__test`");
+		$stmt = $this->conn->prepare("SELECT * FROM `#__test` WHERE `id` = :id");
+		$stmt->bindValue('id', $uuid);
 		$stmt->execute();
 		$row = $stmt->fetchNextRow();
 		
