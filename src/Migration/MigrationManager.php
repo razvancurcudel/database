@@ -15,6 +15,19 @@ class MigrationManager
 {
 	public function handleCommand()
 	{
-		print_r($_SERVER);
+		$projectDir = realpath(__DIR__ . '/../../../../../');
+		$migrationsDir = $projectDir . '/migration';
+		
+		if(\is_dir($migrationsDir))
+		{
+			printf("MIGRATIONS:\n");
+			
+			foreach(glob($migrationsDir . '/*.php') as $file)
+			{
+				printf("- %s\n", $file);
+			}
+		}
+		
+		\var_dump($projectDir);
 	}
 }
