@@ -166,7 +166,7 @@ class MigrationManager
 							case 'y':
 							case 'yes':
 								file_put_contents($target, $code);
-								printf("+ Migration file generated.\n");
+								printf("[created] Migration file generated.\n");
 								break 2;
 							default:
 								printf("Invalid input, accepted inputs are [y] [yes] [n] [no]\n");
@@ -183,6 +183,6 @@ class MigrationManager
 	
 	protected static function showCommandHelp()
 	{
-		printf("migration generate - Create a new Migration PHP file in the \"migration\" directory of the project.\n");
+		printf(" migration generate - Create a new Migration PHP file in the \"migration\" directory of the project.\n");
 	}
 }
