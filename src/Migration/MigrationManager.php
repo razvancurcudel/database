@@ -40,10 +40,11 @@ class MigrationManager
 			
 			$tpl = [
 				'###CLASS###' => $class,
-				'###DATE###' => $date->format('Y-m-d H:i:s UTC')
+				'###DATE###' => $date->format('Y-m-d H:i:s') . ' UTC'
 			];
+			$code = strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl);
 			
-			echo strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl), "\n\n";
+			file_put_contents($migrationsDir . '/' . $file, $code);
 		}
 	}
 }
