@@ -27,6 +27,21 @@ class MigrationManager
 		$this->platform = $conn->getPlatform();
 	}
 	
+	public function getConnection()
+	{
+		return $this->conn;
+	}
+	
+	public function getPlatform()
+	{
+		return $this->platform;
+	}
+	
+	public function flushDatabase()
+	{
+		$this->platform->flushDatabase();
+	}
+	
 	public function loadMigrations($dir)
 	{
 		$migrations = [];

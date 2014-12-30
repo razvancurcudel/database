@@ -258,7 +258,7 @@ class MySqlPlatform extends AbstractPlatform
 		
 		$sql = strtoupper($type['name']);
 		
-		if(NULL !== $limit || array_key_exists('limit', $type))
+		if(array_key_exists('limit', $type))
 		{
 			$sql .= sprintf('(%u)', ($limit === NULL) ? $type['limit'] : min($limit, $type['limit']));
 		}
