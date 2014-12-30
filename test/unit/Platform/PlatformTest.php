@@ -20,8 +20,14 @@ use KoolKode\Util\UUID;
 
 class PlatformTest extends DatabaseTestCase
 {
+	/**
+	 * @var ConnectionInterface
+	 */
 	protected $conn;
 	
+	/**
+	 * @var AbstractPlatform
+	 */
 	protected $platform;
 	
 	protected function setUp()
@@ -67,6 +73,11 @@ class PlatformTest extends DatabaseTestCase
 		$test1->addIndex(['t2_id']);
 		$test1->addForeignKey(['t2_id'], '#__test2', ['id']);
 		$test1->save();
+		
+		$this->platform->dropForeignKey('#__test1', ['t2_id'], '#__test2', ['id']);
+		$this->platform->dropIndex('#__test1', ['t2_id']);
+
+		$this->conn->insert('#__test1', ['title' => 'foo', 't2_id' => 12]);
 		
 		$this->platform->dropTable('#__test1');
 		$this->platform->dropTable('#__test2');

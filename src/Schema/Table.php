@@ -23,14 +23,15 @@ class Table
 	
 	protected $foreignKeys = [];
 	
-	protected $options = [];
+	protected $options;
 	
 	protected $platform;
 	
-	public function __construct($name, AbstractPlatform $platform)
+	public function __construct($name, AbstractPlatform $platform, array $options = [])
 	{
 		$this->name = (string)$name;
 		$this->platform = $platform;
+		$this->options = $options;
 	}
 	
 	public function getName()

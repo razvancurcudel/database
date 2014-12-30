@@ -11,8 +11,22 @@
 
 namespace KoolKode\Database\Migration;
 
+use KoolKode\Database\ConnectionInterface;
+use KoolKode\Database\Platform\AbstractPlatform;
+use KoolKode\Database\Schema\Table;
+
 abstract class AbstractMigration
 {
+	protected $conn;
+	
+	protected $platform;
+	
+	public function __construct(ConnectionInterface $conn, AbstractPlatform $platform)
+	{
+		$this->conn = $conn;
+		$this->platform = $platform;
+	}
+	
 	public function up()
 	{
 		
@@ -21,5 +35,30 @@ abstract class AbstractMigration
 	public function down()
 	{
 		
+	}
+	
+	public function hasTable($tableName)
+	{
+		return $this->platform->hasTable($tableName);
+	}
+	
+	public function table($tableName, array $options = [])
+	{
+		return new Table($tableName, $this->platform, $options);
+	}
+	
+	public function dropTable($tableName)
+	{
+		$this->platform->dropTable($tableName);
+	}
+	
+	public function dropIndex($tableName, array $columns)
+	{
+		$this->platform->dropIndex($tableName, $columns);
+	}
+	
+	public function dropForeignKey($tableName, array $columns, $refTable, array $refColumns)
+	{
+		$this->platform->dropForeignKey($tableName, $columns, $refTable, $refColumns);
 	}
 }

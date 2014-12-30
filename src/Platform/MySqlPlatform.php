@@ -153,16 +153,52 @@ class MySqlPlatform extends AbstractPlatform
 	public function dropIndex($tableName, array $columns)
 	{
 		$index = new Index($columns);
+		$name = $index->getName($this->conn->applyPrefix($tableName));
 		
-		$sql = sprintf('ALTER TABLE %s DROP INDEX %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($index->getName($tableName)));
+		$sql = sprintf('SHOW KEYS FROM %s WHERE Key_name = :name', $this->conn->quoteIdentifier($tableName));
 		$stmt = $this->conn->prepare($sql);
+		$stmt->bindValue('name', $name);
 		$stmt->execute();
+		
+		if(count($stmt->fetchRows()))
+		{
+			$sql = sprintf('ALTER TABLE %s DROP INDEX %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($name));
+			$stmt = $this->conn->prepare($sql);
+			$stmt->execute();
+		}
 	}
 	
 	public function addForeignKey(Table $table, ForeignKey $key)
 	{
 		$sql = sprintf('ALTER TABLE %s ADD %s', $this->conn->quoteIdentifier($table->getName()), $this->getForeignKeyDefinitionSql($table->getName(), $key));
 		$this->conn->execute($sql);
+	}
+	
+	public function dropForeignKey($tableName, array $columns, $refTable, array $refColumns)
+	{
+		$key = new ForeignKey($columns, $refTable, $refColumns);
+		$name = $key->getName($this->conn->applyPrefix($tableName));
+		
+		$sql = "
+			SELECT 1
+			FROM `information_schema`.`TABLE_CONSTRAINTS`
+			WHERE `information_schema`.`TABLE_CONSTRAINTS`.`CONSTRAINT_TYPE` = :type
+			AND `information_schema`.`TABLE_CONSTRAINTS`.`TABLE_SCHEMA` = DATABASE()
+			AND `information_schema`.`TABLE_CONSTRAINTS`.`TABLE_NAME` = :table
+			AND `information_schema`.`TABLE_CONSTRAINTS`.`CONSTRAINT_NAME` = :name
+			LIMIT 1
+		";
+		$stmt = $this->conn->prepare($sql);
+		$stmt->bindValue('type', 'FOREIGN KEY');
+		$stmt->bindValue('table', $this->conn->applyPrefix($tableName));
+		$stmt->bindValue('name', $name);
+		$stmt->execute();
+	
+		if($stmt->fetchNextColumn(0))
+		{
+			$sql = sprintf('ALTER TABLE %s DROP FOREIGN KEY %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($name));
+			$this->conn->execute($sql);
+		}
 	}
 	
 	protected function getDatabaseType($type)
@@ -244,7 +280,7 @@ class MySqlPlatform extends AbstractPlatform
 	protected function getIndexDefinitionSql(Table $table, Index $index)
 	{
 		$sql = $index->isUnique() ? 'UNIQUE INDEX ' : 'INDEX ';
-		$sql .= $this->conn->quoteIdentifier($index->getName($table->getName()));
+		$sql .= $this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($table->getName())));
 		
 		return $sql;
 	}
@@ -255,7 +291,7 @@ class MySqlPlatform extends AbstractPlatform
 		$cols = array_map($quote, $key->getColumns());
 		$ref = array_map($quote, $key->getRefColumns());
 		
-		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($tableName);
+		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($key->getName($this->conn->applyPrefix($tableName)));
 		$sql .= ' FOREIGN KEY (' . implode(', ', $cols) . ') REFERENCES ';
 		$sql .= $this->conn->quoteIdentifier($key->getRefTable());
 		$sql .= ' (' . implode(', ', $ref) . ')';

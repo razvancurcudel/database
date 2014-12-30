@@ -138,7 +138,7 @@ class SqlitePlatform extends AbstractPlatform
 	{
 		$index = new Index($columns);
 		
-		$sql = sprintf('DROP INDEX %s', $this->conn->quoteIdentifier($index->getName($tableName)));
+		$sql = sprintf('DROP INDEX %s', $this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($tableName))));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -160,11 +160,15 @@ class SqlitePlatform extends AbstractPlatform
 		
 		$stmt = $this->conn->prepare(sprintf("PRAGMA table_info(%s)", $this->conn->quoteIdentifier($table->getName())));
 		$stmt->execute();
-		
-		$this->conn->execute(sprintf('ALTER TABLE %s RENAME TO %s', $this->conn->quoteIdentifier($table->getName()), $this->conn->quoteIdentifier($tmpName)));
-		
 		$cols = array_map(function($val) { return $this->conn->quoteIdentifier($val); }, (array)$stmt->fetchColumns('name'));
 		
+		$stmt = $this->conn->prepare("SELECT `sql` FROM `sqlite_master` WHERE `type` = :type AND `tbl_name` = :name AND NOT `sql` IS NULL");
+		$stmt->bindValue('type', 'index');
+		$stmt->bindValue('name', $this->conn->applyPrefix($table->getName()));
+		$stmt->execute();
+		$idx = $stmt->fetchColumns(0);
+		
+		$this->conn->execute(sprintf('ALTER TABLE %s RENAME TO %s', $this->conn->quoteIdentifier($table->getName()), $this->conn->quoteIdentifier($tmpName)));
 		$this->conn->execute($sql . ', ' . $this->getForeignKeyDefinitionSql($key) . ')');
 		
 		$sql = sprintf(
@@ -175,8 +179,91 @@ class SqlitePlatform extends AbstractPlatform
 			$this->conn->quoteIdentifier($tmpName)
 		);
 		$this->conn->execute($sql);
-		
 		$this->conn->execute(sprintf("DROP TABLE %s", $this->conn->quoteIdentifier($tmpName)));
+		
+		foreach($idx as $sql)
+		{
+			$this->conn->execute($sql);
+		}
+	}
+	
+	public function dropForeignKey($tableName, array $columns, $refTable, array $refColumns)
+	{
+		$stmt = $this->conn->prepare("SELECT `sql` FROM `sqlite_master` WHERE `type` = :type AND `tbl_name` = :name");
+		$stmt->bindValue('type', 'table');
+		$stmt->bindValue('name', $this->conn->applyPrefix($tableName));
+		$stmt->execute();
+		
+		$tmpName = $tableName . '_tmp_';
+		$sql = rtrim($stmt->fetchNextColumn('sql'), ' )');
+		
+		if('' === trim($sql))
+		{
+			throw new \RuntimeException(sprintf('Database table "%s" not found', $tableName));
+		}
+		
+		$stmt = $this->conn->prepare(sprintf("PRAGMA table_info(%s)", $this->conn->quoteIdentifier($tableName)));
+		$stmt->execute();
+		
+		$cols = [];
+		$check = array_fill_keys($columns, true);
+		
+		foreach($stmt->fetchRows() as $row)
+		{
+			$cols[] = $this->conn->quoteIdentifier($row['name']);
+			
+			if(isset($check[$row['name']]))
+			{
+				unset($check[$row['name']]);
+			}
+		}
+		
+		if(!empty($check))
+		{
+			throw new \RuntimeException(sprintf('Column(s) %s not found in table %s', implode(', ', array_keys($check)), $tableName));
+		}
+		
+		$stmt = $this->conn->prepare("SELECT `sql` FROM `sqlite_master` WHERE `type` = :type AND `tbl_name` = :name AND NOT `sql` IS NULL");
+		$stmt->bindValue('type', 'index');
+		$stmt->bindValue('name', $this->conn->applyPrefix($tableName));
+		$stmt->execute();
+		$idx = $stmt->fetchColumns(0);
+		
+		$this->conn->execute(sprintf("ALTER TABLE %s RENAME TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($tmpName)));
+		
+		// Look for foreign key definitions in existing create table DDL:
+		if(preg_match_all("',\s*FOREIGN\s+KEY\s*\\(([^\\)]+)\\)\s*REFERENCES\s+([^\\(]+)\s*\\(([^\\)]+)\\)[^,$]*'i", $sql, $m, PREG_SET_ORDER))
+		{
+			$cleanup = function($val) { return trim(trim($val), '"'); };
+			
+			foreach($m as $fk)
+			{
+				$fcols = array_map($cleanup, explode(',', $fk[1]));
+				$frcols = array_map($cleanup, explode(',', $fk[3]));
+				
+				if($cleanup($fk[2]) == $this->conn->applyPrefix($refTable) && $fcols == $columns && $frcols == $refColumns)
+				{
+					$sql = str_replace($fk[0], ' ', $sql);
+				}
+			}
+		}
+		
+		$this->conn->execute($sql . ')');
+		
+		$sql = sprintf(
+			'INSERT INTO %s (%s) SELECT %s FROM %s',
+			$this->conn->quoteIdentifier($tableName),
+			implode(', ', $cols),
+			implode(', ', $cols),
+			$this->conn->quoteIdentifier($tmpName)
+		);
+		$this->conn->execute($sql);
+		$this->conn->execute(sprintf("DROP TABLE %s", $this->conn->quoteIdentifier($tmpName)));
+		
+		foreach($idx as $sql)
+		{
+			$this->conn->execute($sql);
+		}
 	}
 	
 	protected function getDatabaseType($type)
@@ -253,7 +340,7 @@ class SqlitePlatform extends AbstractPlatform
 	protected function getIndexDefinitionSql(Table $table, Index $index)
 	{
 		$sql = $index->isUnique() ? 'UNIQUE INDEX ' : 'INDEX ';
-		$sql .= $this->conn->quoteIdentifier($index->getName($table->getName()));
+		$sql .= $this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($table->getName())));
 		
 		return $sql;
 	}

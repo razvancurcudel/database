@@ -123,7 +123,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 		$sql = sprintf(
 			'CREATE%s INDEX %s ON %s (%s)',
 			$index->isUnique() ? ' UNIQUE' : '',
-			$this->conn->quoteIdentifier($index->getName($table->getName())),
+			$this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($table->getName()))),
 			$this->conn->quoteIdentifier($table->getName()),
 			implode(', ', $cols)
 		);
@@ -135,7 +135,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 	{
 		$index = new Index($columns);
 		
-		$sql = sprintf('ALTER TABLE %s DROP INDEX %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($index->getName($tableName)));
+		$sql = sprintf('DROP INDEX IF EXISTS %s', $this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($tableName))));
 		$stmt = $this->conn->prepare($sql);
 		$stmt->execute();
 	}
@@ -143,6 +143,14 @@ class PostgreSqlPlatform extends AbstractPlatform
 	public function addForeignKey(Table $table, ForeignKey $key)
 	{
 		$sql = sprintf('ALTER TABLE %s ADD %s', $this->conn->quoteIdentifier($table->getName()), $this->getForeignKeyDefinitionSql($table->getName(), $key));
+		$this->conn->execute($sql);
+	}
+	
+	public function dropForeignKey($tableName, array $columns, $refTable, array $refColumns)
+	{
+		$key = new ForeignKey($columns, $refTable, $refColumns);
+		
+		$sql = sprintf('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %s', $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($key->getName($this->conn->applyPrefix($tableName))));
 		$this->conn->execute($sql);
 	}
 	
@@ -227,7 +235,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 	protected function getIndexDefinitionSql(Table $table, Index $index)
 	{
 		$sql = $index->isUnique() ? 'UNIQUE INDEX ' : 'INDEX ';
-		$sql .= $this->conn->quoteIdentifier($index->getName($table->getName()));
+		$sql .= $this->conn->quoteIdentifier($index->getName($this->conn->applyPrefix($table->getName())));
 		
 		return $sql;
 	}
@@ -238,7 +246,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 		$cols = array_map($quote, $key->getColumns());
 		$ref = array_map($quote, $key->getRefColumns());
 		
-		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($key->getName($tableName));
+		$sql = 'CONSTRAINT ' . $this->conn->quoteIdentifier($key->getName($this->conn->applyPrefix($tableName)));
 		$sql .= ' FOREIGN KEY (' . implode(', ', $cols) . ') REFERENCES ';
 		$sql .= $this->conn->quoteIdentifier($key->getRefTable());
 		$sql .= ' (' . implode(', ', $ref) . ')';

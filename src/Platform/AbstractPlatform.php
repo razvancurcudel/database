@@ -47,4 +47,6 @@ abstract class AbstractPlatform
 	public abstract function dropIndex($tableName, array $columns);
 	
 	public abstract function addForeignKey(Table $table, ForeignKey $key);
+	
+	public abstract function dropForeignKey($tableName, array $columns, $refTable, array $refColumns);
 }
