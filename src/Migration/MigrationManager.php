@@ -67,7 +67,7 @@ class MigrationManager
 				
 				require_once $file->getPathname();
 				
-				$migration = $className($version, $conn, $platform);
+				$migration = new $className($version, $conn, $platform);
 				$migrations[$version] = $migration;
 			}
 		}
