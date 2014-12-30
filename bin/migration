@@ -1,4 +1,9 @@
 <?php
 
-echo "HELLO BIN!\n";
-echo __DIR__, "\n";
+$vendorDir = dirname(dirname(dirname(realpath(__DIR__))));
+$projectDir = dirname($vendorDir);
+
+require $vendorDir . '/autoload.php';
+
+$manager = new MigratonManager();
+$manager->handleCommand();
