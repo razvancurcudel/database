@@ -32,7 +32,18 @@ class MigrationManager
 		
 		if(!empty($args) && $args[0] == 'generate')
 		{
-			echo 'Version' . gmdate('YmdHis') . '.php';
+			$date = new \DateTime('@' . time());
+			$date->setTimezone(new \DateTimeZone('UTC'));
+			
+			$class = 'Version' . $date->format('YmdHis');
+			$file = $class . '.php';
+			
+			$tpl = [
+				'###CLASS###' => $class,
+				'###DATE###' => $date->format('Y-m-d H:i:s UTC')
+			];
+			
+			echo strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl), "\n\n";
 		}
 	}
 }

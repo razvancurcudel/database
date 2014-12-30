@@ -1,0 +1,25 @@
+<?php
+
+use KoolKode\Database\Migration\AbstractMigration;
+
+/**
+ * @generated ###DATE###
+ */
+class ###CLASS### extends AbstractMigration
+{
+    /**
+     * Migrate up.
+     */
+    public function up()
+    {
+        
+    }
+    
+    /**
+     * Migrate down.
+     */
+    public function down()
+    {
+        
+    }
+}
