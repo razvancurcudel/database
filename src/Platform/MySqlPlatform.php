@@ -80,14 +80,25 @@ class MySqlPlatform extends AbstractPlatform
 		];
 		$options = array_merge($options, array_change_key_case($table->getOptions(), CASE_LOWER));
 		
+		$pk = [];
 		$sql = 'CREATE TABLE ' . $this->conn->quoteIdentifier($table->getName()) . ' ( ';
 		
 		foreach($table->getPendingColumns() as $col)
 		{
 			$sql .= $this->conn->quoteIdentifier($col->getName()) . ' ' . $this->getColumnDefinitionSql($col) . ', ';
+			
+			if($col->isPrimaryKey())
+			{
+				$pk[] = $this->conn->quoteIdentifier($col->getName());
+			}
 		}
 		
 		$sql = rtrim($sql, ', ');
+		
+		if(!empty($pk))
+		{
+			$sql .= sprintf(', PRIMARY KEY (%s)', implode(', ', $pk));
+		}
 		
 		foreach($table->getPendingIndexes() as $index)
 		{
@@ -264,14 +275,9 @@ class MySqlPlatform extends AbstractPlatform
 			$sql .= $this->getDefaultValueSql($col->getDefault());
 		}
 		
-		if($col->isPrimaryKey())
+		if($col->isPrimaryKey() && $col->isIdentity())
 		{
-			$sql .= ' PRIMARY KEY';
-			
-			if($col->isIdentity())
-			{
-				$sql .= ' AUTO_INCREMENT';
-			}
+			$sql .= ' AUTO_INCREMENT';
 		}
 		
 		return $sql;

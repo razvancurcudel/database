@@ -73,14 +73,25 @@ class SqlitePlatform extends AbstractPlatform
 
 	public function createTable(Table $table)
 	{
+		$pk = [];
 		$sql = 'CREATE TABLE ' . $this->conn->quoteIdentifier($table->getName()) . ' ( ';
 		
 		foreach($table->getPendingColumns() as $col)
 		{
 			$sql .= $this->conn->quoteIdentifier($col->getName()) . ' ' . $this->getColumnDefinitionSql($col) . ', ';
+			
+			if($col->isPrimaryKey() && !$col->isIdentity())
+			{
+				$pk[] = $this->conn->quoteIdentifier($col->getName());
+			}
 		}
 		
 		$sql = rtrim($sql, ', ');
+		
+		if(!empty($pk))
+		{
+			$sql .= sprintf(', PRIMARY KEY (%s)', implode(', ', $pk));
+		}
 		
 		foreach($table->getPendingForeignKeys() as $key)
 		{
@@ -324,14 +335,9 @@ class SqlitePlatform extends AbstractPlatform
 			$sql .= $this->getDefaultValueSql($col->getDefault());
 		}
 		
-		if($col->isPrimaryKey())
+		if($col->isPrimaryKey() && $col->isIdentity())
 		{
-			$sql .= ' PRIMARY KEY';
-			
-			if($col->isIdentity())
-			{
-				$sql .= ' AUTOINCREMENT';
-			}
+			$sql .= ' PRIMARY KEY AUTOINCREMENT';
 		}
 		
 		return $sql;

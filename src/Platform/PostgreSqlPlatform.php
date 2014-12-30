@@ -64,14 +64,25 @@ class PostgreSqlPlatform extends AbstractPlatform
 
 	public function createTable(Table $table)
 	{
+		$pk = [];
 		$sql = 'CREATE TABLE ' . $this->conn->quoteIdentifier($table->getName()) . ' ( ';
 		
 		foreach($table->getPendingColumns() as $col)
 		{
 			$sql .= $this->conn->quoteIdentifier($col->getName()) . ' ' . $this->getColumnDefinitionSql($col) . ', ';
+			
+			if($col->isPrimaryKey())
+			{
+				$pk[] = $this->conn->quoteIdentifier($col->getName());
+			}
 		}
 		
 		$sql = rtrim($sql, ', ');
+		
+		if(!empty($pk))
+		{
+			$sql .= sprintf(', PRIMARY KEY (%s)', implode(', ', $pk));
+		}
 		
 		foreach($table->getPendingForeignKeys() as $key)
 		{
@@ -222,11 +233,6 @@ class PostgreSqlPlatform extends AbstractPlatform
 		if($col->hasDefault())
 		{
 			$sql .= $this->getDefaultValueSql($col->getDefault());
-		}
-		
-		if($col->isPrimaryKey())
-		{
-			$sql .= ' PRIMARY KEY';
 		}
 		
 		return $sql;
