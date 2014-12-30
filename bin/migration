@@ -1,0 +1,4 @@
+<?php
+
+echo "HELLO BIN!\n";
+echo __DIR__, "\n";

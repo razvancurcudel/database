@@ -41,5 +41,8 @@
 		"psr-4" : {
 			"KoolKode\\Database\\" : "test/src/"
 		}
-	}
+	},
+	"bin" : [
+	    "bin/migration"
+	]
 }
