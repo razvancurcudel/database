@@ -17,14 +17,22 @@ use KoolKode\Database\Schema\Table;
 
 abstract class AbstractMigration
 {
+	protected $version;
+	
 	protected $conn;
 	
 	protected $platform;
 	
-	public function __construct(ConnectionInterface $conn, AbstractPlatform $platform)
+	public function __construct($version, ConnectionInterface $conn, AbstractPlatform $platform)
 	{
+		$this->version = (string)$version;
 		$this->conn = $conn;
 		$this->platform = $platform;
+	}
+	
+	public function getVersion()
+	{
+		return $this->version;
 	}
 	
 	public function up()
