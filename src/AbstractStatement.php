@@ -12,6 +12,7 @@
 namespace KoolKode\Database;
 
 use KoolKode\Stream\StreamInterface;
+use KoolKode\Util\UUID;
 
 /**
  * Baseclass for KoolKode Database statements.
@@ -107,6 +108,18 @@ abstract class AbstractStatement implements StatementInterface
 			if($v instanceof StreamInterface)
 			{
 				$this->stmt->bindValue($k, fopen((string)$v, 'rb'), \PDO::PARAM_LOB);
+			}
+			elseif($v instanceof UUID)
+			{
+				switch($this->conn->getDriverName())
+				{
+					case DB::DRIVER_MSSQL:
+					case DB::DRIVER_POSTGRESQL:
+						$this->stmt->bindValue($k, (string)$v);
+						break;
+					default:
+						$this->stmt->bindValue($k, $v->toBinary());
+				}
 			}
 			else
 			{

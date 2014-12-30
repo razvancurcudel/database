@@ -13,8 +13,10 @@ namespace KoolKode\Database\Platform;
 
 use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\ConnectionManager;
+use KoolKode\Database\Schema\Column;
 use KoolKode\Database\Schema\Table;
 use KoolKode\Database\Test\DatabaseTestCase;
+use KoolKode\Util\UUID;
 
 class PlatformTest extends DatabaseTestCase
 {
@@ -68,5 +70,27 @@ class PlatformTest extends DatabaseTestCase
 		
 		$this->platform->dropTable('#__test1');
 		$this->platform->dropTable('#__test2');
+	}
+	
+	public function testUuidColumn()
+	{
+		$test = new Table('#__test', $this->platform);
+		$test->addColumn('id', Column::TYPE_UUID, ['primary_key' => true]);
+		$test->addColumn('title', Column::TYPE_VARCHAR);
+		$test->save();
+		
+		$uuid = UUID::createRandom();
+		
+		$this->conn->insert('#__test', [
+			'id' => $uuid,
+			'title' => 'Entry 1'
+		]);
+		
+		$stmt = $this->conn->prepare("SELECT * FROM `#__test`");
+		$stmt->execute();
+		$row = $stmt->fetchNextRow();
+		
+		$this->assertEquals('Entry 1', $row['title']);
+		$this->assertEquals($uuid, new UUID($row['id']));
 	}
 }
