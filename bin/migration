@@ -1,9 +1,11 @@
 <?php
 
+use KoolKode\Database\Migration\MigrationManager;
+
 $vendorDir = dirname(dirname(dirname(realpath(__DIR__))));
 $projectDir = dirname($vendorDir);
 
 require $vendorDir . '/autoload.php';
 
-$manager = new MigratonManager();
+$manager = new MigrationManager();
 $manager->handleCommand();
