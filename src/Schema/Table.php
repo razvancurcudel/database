@@ -85,6 +85,13 @@ class Table
 		return $this;
 	}
 	
+	public function addUniqueIndex(array $columns, array $options = [])
+	{
+		$this->indexes[] = new Index($columns, array_merge($options, ['unique' => true]));
+	
+		return $this;
+	}
+	
 	public function removeIndex(array $columns)
 	{
 		$this->platform->dropIndex($this->name, $columns);

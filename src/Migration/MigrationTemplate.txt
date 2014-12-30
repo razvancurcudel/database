@@ -1,6 +1,7 @@
 <?php
 
 use KoolKode\Database\Migration\AbstractMigration;
+use KoolKode\Database\Schema\Column;
 
 /**
  * @generated ###DATE###
