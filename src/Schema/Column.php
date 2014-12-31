@@ -16,6 +16,7 @@ class Column
 	const TYPE_VARCHAR = 'varchar';
 	const TYPE_CHAR = 'char';
 	const TYPE_TEXT = 'text';
+	const TYPE_BOOL = 'bool';
 	const TYPE_INT = 'int';
 	const TYPE_BIG_INT = 'bigint';
 	const TYPE_DOUBLE = 'double';
@@ -93,6 +94,7 @@ class Column
 			case self::TYPE_BIG_INT:
 			case self::TYPE_BINARY:
 			case self::TYPE_BLOB:
+			case self::TYPE_BOOL:
 			case self::TYPE_CHAR:
 			case self::TYPE_DOUBLE:
 			case self::TYPE_INT:

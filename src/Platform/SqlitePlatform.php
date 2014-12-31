@@ -279,6 +279,8 @@ class SqlitePlatform extends AbstractPlatform
 				return ['name' => 'binary', 'limit' => 250];
 			case Column::TYPE_BLOB:
 				return ['name' => 'blob'];
+			case Column::TYPE_BOOL:
+				return ['name' => 'tinyint', 'unsigned' => true, 'limit' => 1];
 			case Column::TYPE_CHAR:
 				return ['name' => 'char', 'limit' => 250];
 			case Column::TYPE_DOUBLE:

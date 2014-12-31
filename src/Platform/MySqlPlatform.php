@@ -222,6 +222,8 @@ class MySqlPlatform extends AbstractPlatform
 				return ['name' => 'binary', 'limit' => 250];
 			case Column::TYPE_BLOB:
 				return ['name' => 'longblob'];
+			case Column::TYPE_BOOL:
+				return ['name' => 'tinyint', 'limit' => 1, 'unsigned' => true];
 			case Column::TYPE_CHAR:
 				return ['name' => 'char', 'limit' => 250];
 			case Column::TYPE_DOUBLE:
@@ -263,7 +265,7 @@ class MySqlPlatform extends AbstractPlatform
 			$sql .= sprintf('(%u)', ($limit === NULL) ? $type['limit'] : min($limit, $type['limit']));
 		}
 		
-		if(array_key_exists('unsigned', $type) && $col->isUnsigned())
+		if(!empty($type['unsigned']) || (array_key_exists('unsigned', $type) && $col->isUnsigned()))
 		{
 			$sql .= ' UNSIGNED';
 		}
