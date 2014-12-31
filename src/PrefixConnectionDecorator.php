@@ -99,7 +99,7 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
+	public function lastInsertId($sequenceName, $prefix = NULL)
 	{
 		return $this->conn->lastInsertId($sequenceName, ($prefix === NULL) ? $this->prefix : $prefix);
 	}

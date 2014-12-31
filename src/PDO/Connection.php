@@ -164,19 +164,24 @@ class Connection extends AbstractConnection
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
+	public function lastInsertId($sequenceName, $prefix = NULL)
 	{
-		if($this->driverName == DB::DRIVER_MSSQL)
+		switch($this->driverName)
 		{
-			$stmt = $this->pdo->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
-			$stmt->execute();
-			
-			return (int)$stmt->fetchColumn();
-		}
-		
-		if($sequenceName === NULL)
-		{
-			return $this->pdo->lastInsertId();
+			case DB::DRIVER_MYSQL:
+			case DB::DRIVER_SQLITE:
+				return $this->pdo->lastInsertId();
+			case DB::DRIVER_POSTGRESQL:
+				if(is_array($sequenceName))
+				{
+					$sequenceName = vsprintf('%s_%s_seq', $sequenceName);
+				}
+				return $this->pdo->lastInsertId($this->prepareSql($sequenceName, $prefix));
+			case DB::DRIVER_MYSQL:
+				$stmt = $this->pdo->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
+				$stmt->execute();
+					
+				return (int)$stmt->fetchColumn();
 		}
 		
 		return $this->pdo->lastInsertId($this->prepareSql($sequenceName, $prefix));

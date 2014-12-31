@@ -116,11 +116,24 @@ class Connection extends AbstractConnection
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
+	public function lastInsertId($sequenceName, $prefix = NULL)
 	{
-		if($sequenceName === NULL)
+		switch($this->driverName)
 		{
-			return $this->conn->lastInsertId();
+			case DB::DRIVER_MYSQL:
+			case DB::DRIVER_SQLITE:
+				return $this->conn->lastInsertId();
+			case DB::DRIVER_POSTGRESQL:
+				if(is_array($sequenceName))
+				{
+					$sequenceName = vsprintf('%s_%s_seq', $sequenceName);
+				}
+				return $this->conn->lastInsertId($this->prepareSql($sequenceName, $prefix));
+			case DB::DRIVER_MYSQL:
+				$stmt = $this->conn->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
+				$stmt->execute();
+					
+				return (int)$stmt->fetchColumn();
 		}
 		
 		return $this->conn->lastInsertId($this->prepareSql($sequenceName, $prefix));

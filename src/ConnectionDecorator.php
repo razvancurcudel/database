@@ -179,7 +179,7 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName = NULL, $prefix = NULL)
+	public function lastInsertId($sequenceName, $prefix = NULL)
 	{
 		return $this->conn->lastInsertId($sequenceName, $prefix);
 	}

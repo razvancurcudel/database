@@ -61,7 +61,7 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		$stmt->bindValue('title', 'My Test Blog');
 		$stmt->bindValue('date', $date->format('U'));
 		$this->assertEquals(1, $stmt->execute());
-		$this->assertEquals(1, $this->conn->lastInsertId('#__blog_id_seq'));
+		$this->assertEquals(1, $this->conn->lastInsertId(['#__blog', 'id']));
 		
 		$sql = "	SELECT *
 					FROM `#__blog`
@@ -93,7 +93,7 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		];
 		
 		$this->conn->insert('#__blog', $blog);
-		$blog['id'] = $this->conn->lastInsertId('#__blog_id_seq');
+		$blog['id'] = $this->conn->lastInsertId(['#__blog', 'id']);
 		
 		$stmt = $this->conn->prepare("SELECT * FROM `#__blog` WHERE `id` = :id");
 		$stmt->bindValue('id', $blog['id']);
@@ -108,7 +108,7 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		];
 		
 		$this->conn->insert('#__post', $post);
-		$post['id'] = $this->conn->lastInsertId('#__post_id_seq');
+		$post['id'] = $this->conn->lastInsertId(['#__post', 'id']);
 		
 		$stmt = $this->conn->prepare("SELECT * FROM `#__post` WHERE `id` = :id");
 		$stmt->bindValue('id', $post['id']);
@@ -120,7 +120,7 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		];
 		
 		$this->conn->insert('#__tag', $tag);
-		$tag['id'] = $this->conn->lastInsertId('#__tag_id_seq');
+		$tag['id'] = $this->conn->lastInsertId(['#__tag', 'id']);
 		
 		$stmt = $this->conn->prepare("SELECT * FROM `#__tag` WHERE `id` = :id");
 		$stmt->bindValue('id', $tag['id']);

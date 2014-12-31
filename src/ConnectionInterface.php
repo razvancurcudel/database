@@ -144,11 +144,11 @@ interface ConnectionInterface
 	/**
 	 * Get the last inserted ID value from an auto-increment column or a named sequence.
 	 * 
-	 * @param string $sequenceName
+	 * @param mixed $sequenceName Name of a sequence or an array containing table name and column name of a SERIAL column.
 	 * @param string $prefix
 	 * @return integer
 	 */
-	public function lastInsertId($sequenceName = NULL, $prefix = NULL);
+	public function lastInsertId($sequenceName, $prefix = NULL);
 	
 	/**
 	 * Quote the given value for safe use in a query.
