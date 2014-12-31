@@ -357,6 +357,42 @@ abstract class AbstractConnection implements ConnectionInterface
 	}
 	
 	/**
+	 * Determine the last inserted ID value.
+	 * 
+	 * @param callable $callback The native callback to be invoked.
+	 * @param mixed $sequenceName Name of a sequence or an array containing a table name and a column name of a SERIAL column.
+	 * @param string $prefix
+	 * @return integer
+	 */
+	protected function determineLastInsertId(callable $callback, $sequenceName, $prefix = NULL)
+	{
+		switch($this->driverName)
+		{
+			case DB::DRIVER_MYSQL:
+			case DB::DRIVER_SQLITE:
+				return $callback();
+			case DB::DRIVER_POSTGRESQL:
+				if(is_array($sequenceName))
+				{
+					$stmt = $this->prepare("SELECT currval(pg_get_serial_sequence(:table, :col))");
+					$stmt->bindValue('table', $this->prepareSql($sequenceName[0], $prefix));
+					$stmt->bindValue('col', $sequenceName[1]);
+					$stmt->execute();
+						
+					return (int)$stmt->fetchNextColumn(0);
+				}
+				return $callback($this->prepareSql($sequenceName, $prefix));
+			case DB::DRIVER_MYSQL:
+				$stmt = $this->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
+				$stmt->execute();
+					
+				return (int)$stmt->fetchNextColumn(0);
+		}
+	
+		return $callback($this->prepareSql($sequenceName, $prefix));
+	}
+	
+	/**
 	 * {@inheritdoc}
 	 */
 	public function quoteIdentifier($identifier)
