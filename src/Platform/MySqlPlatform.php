@@ -63,16 +63,12 @@ class MySqlPlatform extends AbstractPlatform
 		try
 		{
 			$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`TABLES` WHERE `table_name` NOT LIKE :kk AND `table_schema` = DATABASE()");
-			$stmt->bindValue('kk', str_replace('_', '__', $this->conn->applyPrefix('#__kk_%')));
+			$stmt->bindValue('kk', str_replace('_', '\\_', $this->conn->applyPrefix('#__kk_%')));
 			$stmt->execute();
-			$tables = $stmt->fetchColumns(0);
 			
-			if(!empty($tables))
+			foreach($stmt->fetchColumns(0) as $table)
 			{
-				$sql = "DELETE FROM " . implode(', ', array_map(function($table) {
-					return $this->conn->quoteIdentifier($table);
-				}, $tables));
-				$this->conn->execute($sql);
+				$this->conn->execute("TRUNCATE TABLE " . $this->conn->quoteIdentifier($table));
 			}
 		}
 		finally
