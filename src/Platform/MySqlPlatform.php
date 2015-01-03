@@ -68,7 +68,7 @@ class MySqlPlatform extends AbstractPlatform
 			
 			foreach($stmt->fetchColumns(0) as $table)
 			{
-				$this->conn->execute("TRUNCATE TABLE " . $this->conn->quoteIdentifier($table));
+				$this->conn->execute("DELETE FROM " . $this->conn->quoteIdentifier($table));
 			}
 		}
 		finally

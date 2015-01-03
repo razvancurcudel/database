@@ -56,8 +56,6 @@ class SqlitePlatform extends AbstractPlatform
 			$stmt->bindValue('kk', $this->conn->applyPrefix('#__kk_*'));
 			$stmt->execute();
 			
-			// FIXME: Need to drop and re-create tables to emulate TRUNCATE command in Sqlite.
-			
 			foreach($stmt->fetchColumns(0) as $table)
 			{
 				$this->conn->execute("DELETE FROM " . $this->conn->quoteIdentifier($table));

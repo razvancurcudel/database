@@ -53,7 +53,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 		try
 		{
 			$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`tables` WHERE `table_name` NOT LIKE :kk AND `table_schema` = current_schema()");
-			$stmt->bindValue('kk', str_replace('_', '__', $this->conn->applyPrefix('#__kk_%')));
+			$stmt->bindValue('kk', str_replace('_', '\\_', $this->conn->applyPrefix('#__kk_%')));
 			$stmt->execute();
 			$tables = $stmt->fetchColumns(0);
 			
@@ -63,7 +63,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 				
 				foreach($tables as $table)
 				{
-					$this->conn->execute(sprintf("TRUNCATE TABLE %s CASCADE", $this->conn->quoteIdentifier($table)));
+					$this->conn->execute(sprintf("DELETE FROM %s", $this->conn->quoteIdentifier($table)));
 				}
 			}
 			
