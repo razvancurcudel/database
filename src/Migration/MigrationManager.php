@@ -66,11 +66,62 @@ class MigrationManager
 		return $migrations;
 	}
 	
-	public function migrateDirectoryUp($dir)
+	/**
+	 * Execute all up-migrations found in the given directory.
+	 * 
+	 * DB will be flushed if a migration must be applied, will simply flush all data if no migration is needed.
+	 * 
+	 * @param string $dir Directory where migration PHP-files are placed.
+	 * @param boolean $flushDatabase Flush database before any migration is applied?
+	 */
+	public function migrateDirectoryUp($dir, $flushDatabase = false)
 	{
-		foreach($this->loadMigrations($dir) as $migration)
+		$migrations = $this->loadMigrations($dir);
+		
+		if(empty($migrations))
 		{
-			$this->migrateUp($migration);
+			$skip = false;
+		}
+		else
+		{
+			$skip = $this->platform->hasTable('#__kk_migrations');
+			
+			if($skip)
+			{
+				$params = [];
+				$in = [];
+				
+				foreach(array_values($migrations) as $i => $migration)
+				{
+					$in[] = ':v' . $i;
+					$params['v' . $i] = $migration->getVersion();
+				}
+				
+				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
+				$stmt->bindAll($params);
+				$stmt->execute();
+	
+				// Only skip migrations if all of them are alreay migrated up.
+				$skip = (count($params) === (int)$stmt->fetchNextColumn(0));
+			}
+		}
+		
+		if(!$skip)
+		{
+			if($flushDatabase)
+			{
+				$this->platform->flushDatabase();
+			}
+			
+			foreach($migrations as $migration)
+			{
+				$this->migrateUp($migration, $flushDatabase && !$flushed);
+			}
+		}
+		
+		if($skip && $flushDatabase)
+		{
+			$this->platform->flushData();
 		}
 	}
 	
@@ -90,7 +141,11 @@ class MigrationManager
 				'version' => $migration->getVersion(),
 				'migrated' => gmdate('YmdHis')
 			]);
+			
+			return true;
 		}
+		
+		return false;
 	}
 	
 	public function migrateDirectoryDown($dir, ConnectionInterface $conn)
