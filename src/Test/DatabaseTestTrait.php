@@ -13,6 +13,7 @@ namespace KoolKode\Database\Test;
 
 use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\ConnectionManager;
+use KoolKode\Database\Migration\MigrationManager;
 use KoolKode\Database\PrefixConnectionDecorator;
 
 /**
@@ -76,5 +77,17 @@ trait DatabaseTestTrait
 		}
 	
 		throw new \OutOfBoundsException(sprintf('ENV param not found: "%s"', $name));
+	}
+	
+	/**
+	 * Execute Up-Migrations from the given directory flushing the DB as needed.
+	 * 
+	 * @param ConnectionInterface $conn
+	 * @param string $dir
+	 */
+	protected static function migrateDirectoryUp(ConnectionInterface $conn, $dir)
+	{
+		$migrator = new MigrationManager($conn, new \DateTime('@' . $_SERVER['REQUEST_TIME']));
+		$migrator->migrateDirectoryUp($dir, true);
 	}
 }

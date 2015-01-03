@@ -21,10 +21,14 @@ class MigrationManager
 	
 	protected $platform;
 	
-	public function __construct(ConnectionInterface $conn)
+	protected $date;
+	
+	public function __construct(ConnectionInterface $conn, \DateTimeInterface $date = NULL)
 	{
 		$this->conn = $conn;
 		$this->platform = $conn->getPlatform();
+		
+		$this->date = ($date === NULL) ? new \DateTime('@0') : clone $date;
 	}
 	
 	public function getConnection()
@@ -90,7 +94,8 @@ class MigrationManager
 			{
 				$params = [];
 				$in = [];
-				$mtime = new \DateTime('@0');
+				
+				$mtime = clone $this->date;
 				
 				foreach(array_values($migrations) as $i => $migration)
 				{
