@@ -90,19 +90,25 @@ class MigrationManager
 			{
 				$params = [];
 				$in = [];
+				$mtime = 0;
 				
 				foreach(array_values($migrations) as $i => $migration)
 				{
 					$in[] = ':v' . $i;
 					$params['v' . $i] = $migration->getVersion();
+					$mtime = max($mtime, filemtime((new \ReflectionClass(get_class($migration)))->getFileName()));
 				}
 				
-				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
+				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) AS cnt, MAX(`migrated`) AS mtime FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
 				$stmt->bindAll($params);
 				$stmt->execute();
 	
 				// Only skip migrations if all of them are alreay migrated up.
-				$skip = (count($params) === (int)$stmt->fetchNextColumn(0));
+				$row = $stmt->fetchNextRow();
+				$dbcnt = (int)$row['cnt'];
+				$dbmtime = (int)$row['mtime'];
+				
+				$skip = (count($params) === $dbcnt) && ($dbmtime > $mtime);
 			}
 		}
 		
