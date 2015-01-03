@@ -41,6 +41,8 @@ abstract class AbstractPlatform
 	}
 	
 	public abstract function flushDatabase();
+
+	public abstract function flushData();
 	
 	public abstract function hasTable($tableName);
 	

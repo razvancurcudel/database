@@ -46,6 +46,27 @@ class SqlitePlatform extends AbstractPlatform
 		}
 	}
 	
+	public function flushData()
+	{
+		$this->conn->execute("PRAGMA foreign_keys = OFF");
+		
+		try
+		{
+			$stmt = $this->conn->prepare("SELECT `name` FROM `sqlite_master` WHERE `name` NOT GLOB 'sqlite_*' AND `name` NOT GLOB :kk AND `type` = 'table'");
+			$stmt->bindValue('kk', $this->conn->applyPrefix('#__kk_*'));
+			$stmt->execute();
+			
+			foreach($stmt->fetchColumns(0) as $table)
+			{
+				$this->conn->execute("DELETE FROM " . $this->conn->quoteIdentifier($table));
+			}
+		}
+		finally
+		{
+			$this->conn->execute("PRAGMA foreign_keys = ON");
+		}
+	}
+	
 	public function hasTable($tableName)
 	{
 		$tn = $this->conn->applyPrefix($tableName);

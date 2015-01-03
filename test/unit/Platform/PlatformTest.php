@@ -42,6 +42,7 @@ class PlatformTest extends \PHPUnit_Framework_TestCase
 	
 	protected function tearDown()
 	{
+		$this->platform->flushData();
 		$this->platform->flushDatabase();
 		
 		parent::tearDown();

@@ -46,6 +46,37 @@ class PostgreSqlPlatform extends AbstractPlatform
 		}
 	}
 	
+	public function flushData()
+	{
+		$this->conn->beginTransaction();
+		
+		try
+		{
+			$stmt = $this->conn->prepare("SELECT `table_name` FROM `information_schema`.`tables` WHERE `table_name` NOT LIKE :kk AND `table_schema` = current_schema()");
+			$stmt->bindValue('kk', str_replace('_', '__', $this->conn->applyPrefix('#__kk_%')));
+			$stmt->execute();
+			$tables = $stmt->fetchColumns(0);
+			
+			if(!empty($tables))
+			{
+				$this->conn->execute("SET CONSTRAINTS ALL DEFERRED");
+				
+				foreach($tables as $table)
+				{
+					$this->conn->execute(sprintf("DELETE FROM %s", $this->conn->quoteIdentifier($table)));
+				}
+			}
+			
+			$this->conn->commit();
+		}
+		catch(\Exception $e)
+		{
+			$this->conn->rollBack();
+			
+			throw $e;
+		}
+	}
+	
 	public function hasTable($tableName)
 	{
 		$tn = $this->conn->applyPrefix($tableName);
@@ -275,6 +306,8 @@ class PostgreSqlPlatform extends AbstractPlatform
 		{
 			$sql .= ' ON DELETE ' . $delete;
 		}
+		
+		$sql .= ' DEFERRABLE INITIALLY IMMEDIATE';
 		
 		return $sql;
 	}
