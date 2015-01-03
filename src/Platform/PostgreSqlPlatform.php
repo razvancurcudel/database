@@ -63,7 +63,7 @@ class PostgreSqlPlatform extends AbstractPlatform
 				
 				foreach($tables as $table)
 				{
-					$this->conn->execute(sprintf("DELETE FROM %s", $this->conn->quoteIdentifier($table)));
+					$this->conn->execute(sprintf("TRUNCATE TABLE %s CASCADE", $this->conn->quoteIdentifier($table)));
 				}
 			}
 			
