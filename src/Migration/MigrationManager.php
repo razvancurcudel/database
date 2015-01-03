@@ -90,13 +90,18 @@ class MigrationManager
 			{
 				$params = [];
 				$in = [];
-				$mtime = 0;
+				$mtime = new \DateTime('@0');
 				
 				foreach(array_values($migrations) as $i => $migration)
 				{
 					$in[] = ':v' . $i;
 					$params['v' . $i] = $migration->getVersion();
-					$mtime = max($mtime, filemtime((new \ReflectionClass(get_class($migration)))->getFileName()));
+					$date = new \DateTime('@' . filemtime((new \ReflectionClass(get_class($migration)))->getFileName()));
+					
+					if($date > $mtime)
+					{
+						$mtime = $date;
+					}
 				}
 				
 				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) AS cnt, MAX(`migrated`) AS mtime FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
@@ -106,7 +111,7 @@ class MigrationManager
 				// Only skip migrations if all of them are alreay migrated up.
 				$row = $stmt->fetchNextRow();
 				$dbcnt = (int)$row['cnt'];
-				$dbmtime = (int)$row['mtime'];
+				$dbmtime = \DateTime::createFromFormat('YmdHis', $row['mtime']);
 				
 				$skip = (count($params) === $dbcnt) && ($dbmtime > $mtime);
 			}
@@ -172,8 +177,8 @@ class MigrationManager
 		if(!$this->platform->hasTable('#__kk_migrations'))
 		{
 			$table = new Table('#__kk_migrations', $this->platform);
-			$table->addColumn('version', 'bigint', ['limit' => 14, 'primary_key' => true]);
-			$table->addColumn('migrated', 'char', ['limit' => 14]);
+			$table->addColumn('version', 'char', ['limit' => 14, 'primary_key' => true]);
+			$table->addColumn('migrated', 'bigint', ['unsigned' => true]);
 			$table->addIndex(['migrated']);
 			$table->create();
 		}
