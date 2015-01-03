@@ -115,7 +115,7 @@ class MigrationManager
 			
 			foreach($migrations as $migration)
 			{
-				$this->migrateUp($migration, $flushDatabase && !$flushed);
+				$this->migrateUp($migration);
 			}
 		}
 		
