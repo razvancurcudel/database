@@ -25,4 +25,11 @@ interface ConnectionManagerInterface
 	 * @return ConnectionInterface
 	 */
 	public function getConnection($name);
+	
+	/**
+	 * Get the names of all registered DB connections.
+	 * 
+	 * @return array<string>
+	 */
+	public function getRegisteredConnectionNames();
 }

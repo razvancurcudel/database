@@ -58,6 +58,9 @@ class ConnectionManager implements ConnectionManagerInterface
 		$this->logger = $logger;
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getConnection($name)
 	{
 		if(isset($this->connections[$name]))
@@ -81,6 +84,14 @@ class ConnectionManager implements ConnectionManagerInterface
 		}
 		
 		return $this->connections[$name] = $conn;
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getRegisteredConnectionNames()
+	{
+		return array_keys($this->config->getConfig('connection')->toArray());
 	}
 	
 	public function getAdapter($name)
