@@ -45,7 +45,7 @@ class GenerateMigrationCommand extends Command
 		
 		if(!is_dir($this->directory))
 		{
-			$question = new ConfirmationQuestion(sprintf('Migration directory <info>%s</info> does not exist, dou you want to create it?', $this->directory), false);
+			$question = new ConfirmationQuestion(sprintf('Migration directory <info>%s</info> does not exist, dou you want to create it? [n] ', $this->directory), false);
 			
 			if(!$questionHelper->ask($input, $output, $question))
 			{
@@ -75,7 +75,7 @@ class GenerateMigrationCommand extends Command
 		$code = strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl);
 		$target = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $this->directory . '/' . $file);
 		
-		$question = new ConfirmationQuestion(sprintf('Generate migration <info>%s</info>?', $target), true);
+		$question = new ConfirmationQuestion(sprintf('Generate migration <info>%s</info>? [y] ', $target), true);
 		
 		if(!$questionHelper->ask($input, $output, $question))
 		{
