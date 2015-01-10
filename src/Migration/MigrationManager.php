@@ -46,33 +46,75 @@ class MigrationManager
 		$this->platform->flushDatabase();
 	}
 	
-	public function loadMigrations($dir)
+	/**
+	 * Execute all up-migrations loaded from the given config.
+	 *
+	 * DB will be flushed if a migration must be applied, will simply flush all data if no migration is needed.
+	 *
+	 * @param MigrationConfig $config All configured migrations to be applied.
+	 * @param boolean $flushDatabase Flush database before any migration is applied?
+	 */
+	public function migrateUp(MigrationConfig $config, $flushDatabase = false)
 	{
-		$migrations = [];
+		$migrations = $this->instantiateMigrations($config);
 		
-		foreach(glob($dir . DIRECTORY_SEPARATOR . '*.php') as $file)
+		if(empty($migrations))
 		{
-			$file = new \SplFileInfo($file);
+			$skip = false;
+		}
+		else
+		{
+			$skip = $this->platform->hasTable('#__kk_migrations');
 				
-			if(preg_match("'^(Version([0-9]{14}))\\.php$'i", $file->getFilename(), $m))
+			if($skip)
 			{
-				$className = $m[1];
-				$version = $m[2];
+				$params = [];
+				$in = [];
 		
-				require_once $file->getPathname();
-				
-				if(!class_exists($className, false))
+				$mtime = clone $this->date;
+		
+				foreach(array_values($migrations) as $i => $migration)
 				{
-					throw new \RuntimeException(sprintf('Migration class %s not declared in "%s"', $className, $file->getPathname()));
+					$in[] = ':v' . $i;
+					$params['v' . $i] = $migration->getVersion();
+					$date = new \DateTime('@' . filemtime((new \ReflectionClass(get_class($migration)))->getFileName()));
+						
+					if($date > $mtime)
+					{
+						$mtime = $date;
+					}
 				}
-				
-				$migrations[$version] = new $className($version, $this->conn, $this->platform);
+		
+				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) AS cnt, MAX(`migrated`) AS mtime FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
+				$stmt->bindAll($params);
+				$stmt->execute();
+		
+				// Only skip migrations if all of them are alreay migrated up.
+				$row = $stmt->fetchNextRow();
+				$dbcnt = (int)$row['cnt'];
+				$dbmtime = \DateTime::createFromFormat('YmdHis', $row['mtime']);
+		
+				$skip = (count($params) === $dbcnt) && ($dbmtime > $mtime);
 			}
 		}
 		
-		ksort($migrations);
+		if(!$skip)
+		{
+			if($flushDatabase)
+			{
+				$this->platform->flushDatabase();
+			}
+				
+			foreach($migrations as $migration)
+			{
+				$this->executeMigrationUp($migration);
+			}
+		}
 		
-		return $migrations;
+		if($skip && $flushDatabase)
+		{
+			$this->platform->flushData();
+		}
 	}
 	
 	/**
@@ -85,68 +127,46 @@ class MigrationManager
 	 */
 	public function migrateDirectoryUp($dir, $flushDatabase = false)
 	{
-		$migrations = $this->loadMigrations($dir);
+		$config = new MigrationConfig();
+		$config->loadMigrationsFromDirectory($dir);
 		
-		if(empty($migrations))
-		{
-			$skip = false;
-		}
-		else
-		{
-			$skip = $this->platform->hasTable('#__kk_migrations');
-			
-			if($skip)
-			{
-				$params = [];
-				$in = [];
-				
-				$mtime = clone $this->date;
-				
-				foreach(array_values($migrations) as $i => $migration)
-				{
-					$in[] = ':v' . $i;
-					$params['v' . $i] = $migration->getVersion();
-					$date = new \DateTime('@' . filemtime((new \ReflectionClass(get_class($migration)))->getFileName()));
-					
-					if($date > $mtime)
-					{
-						$mtime = $date;
-					}
-				}
-				
-				$stmt = $this->conn->prepare(sprintf("SELECT COUNT(*) AS cnt, MAX(`migrated`) AS mtime FROM `#__kk_migrations` WHERE `version` IN (%s)", implode(', ', $in)));
-				$stmt->bindAll($params);
-				$stmt->execute();
-	
-				// Only skip migrations if all of them are alreay migrated up.
-				$row = $stmt->fetchNextRow();
-				$dbcnt = (int)$row['cnt'];
-				$dbmtime = \DateTime::createFromFormat('YmdHis', $row['mtime']);
-				
-				$skip = (count($params) === $dbcnt) && ($dbmtime > $mtime);
-			}
-		}
-		
-		if(!$skip)
-		{
-			if($flushDatabase)
-			{
-				$this->platform->flushDatabase();
-			}
-			
-			foreach($migrations as $migration)
-			{
-				$this->migrateUp($migration);
-			}
-		}
-		
-		if($skip && $flushDatabase)
-		{
-			$this->platform->flushData();
-		}
+		$this->migrateUp($config, $flushDatabase);
 	}
 	
-	public function migrateUp(AbstractMigration $migration)
+	protected function instantiateMigrations(MigrationConfig $config)
+	{
+		$migrations = [];
+	
+		foreach($config->getMigrations() as $version => $file)
+		{
+			if(!is_file($file))
+			{
+				throw new \RuntimeException(sprintf('Migration file not found: "%s"', $file));
+			}
+				
+			require_once $file;
+				
+			$className = 'Version' . $version;
+				
+			if(!class_exists($className, false))
+			{
+				throw new \RuntimeException(sprintf('Migration class not found: %s', $className));
+			}
+				
+			if(!is_subclass_of($className, AbstractMigration::class))
+			{
+				throw new \RuntimeException(sprintf('Migration class %s must extend %s', $className, AbstractMigration::class));
+			}
+				
+			$migrations[$version] = new $className($version, $this->conn, $this->platform);
+		}
+		
+		ksort($migrations);
+	
+		return $migrations;
+	}
+	
+	protected function executeMigrationUp(AbstractMigration $migration)
 	{
 		$this->ensureMigrationTableExists();
 		
