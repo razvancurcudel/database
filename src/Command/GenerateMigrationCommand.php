@@ -73,7 +73,7 @@ class GenerateMigrationCommand extends Command
 			'###DATE###' => $date->format('Y-m-d H:i:s') . ' UTC'
 		];
 		$code = strtr(file_get_contents(__DIR__ . '/MigrationTemplate.txt'), $tpl);
-		$target = str_replace('\\/', DIRECTORY_SEPARATOR, $this->directory . '/' . $file);
+		$target = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $this->directory . '/' . $file);
 		
 		$question = new ConfirmationQuestion(sprintf('Generate migration <info>%s</info>?', $target), true);
 		

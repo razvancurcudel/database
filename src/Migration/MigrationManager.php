@@ -50,7 +50,7 @@ class MigrationManager
 	{
 		$migrations = [];
 		
-		foreach(glob($dir . '/*.php') as $file)
+		foreach(glob($dir . DIRECTORY_SEPARATOR . '*.php') as $file)
 		{
 			$file = new \SplFileInfo($file);
 				
@@ -60,6 +60,11 @@ class MigrationManager
 				$version = $m[2];
 		
 				require_once $file->getPathname();
+				
+				if(!class_exists($className, false))
+				{
+					throw new \RuntimeException(sprintf('Migration class %s not declared in "%s"', $className, $file->getPathname()));
+				}
 				
 				$migrations[$version] = new $className($version, $this->conn, $this->platform);
 			}
