@@ -9,7 +9,8 @@
  * file that was distributed with this source code.
  */
 
-use KoolKode\Database\Migration\MigrationManager;
+use KoolKode\Database\Command\GenerateMigrationCommand;
+use Symfony\Component\Console\Application;
 
 $parts = explode(DIRECTORY_SEPARATOR, getcwd());
 $dir = NULL;
@@ -35,4 +36,6 @@ if($dir === NULL)
 
 require $dir . '/vendor/autoload.php';
 
-MigrationManager::handleCommand();
+$app = new Application('KoolKode DB Console');
+$app->add(new GenerateMigrationCommand($dir . DIRECTORY_SEPARATOR . 'migration'));
+$app->run();

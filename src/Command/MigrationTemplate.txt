@@ -12,7 +12,7 @@ class ###CLASS### extends AbstractMigration
      */
     public function up()
     {
-        // TODO: Generate tables etc.
+        
     }
     
     /**
@@ -20,6 +20,6 @@ class ###CLASS### extends AbstractMigration
      */
     public function down()
     {
-        // TODO: Dump tables etc.
+        
     }
 }
