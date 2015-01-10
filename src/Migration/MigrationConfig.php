@@ -28,9 +28,9 @@ class MigrationConfig
 		{
 			$file = new \SplFileInfo($file);
 		
-			if(preg_match("'^(Version([0-9]{14}))\\.php$'i", $file->getFilename(), $m))
+			if($file->isFile() && preg_match("'^(Version([0-9]{14}))\\.php$'i", $file->getFilename(), $m))
 			{
-				$this->migrations[$m[2]] = $file->getPathname();
+				$this->migrations[$m[2]] = realpath($file->getPathname());
 			}
 		}
 		
