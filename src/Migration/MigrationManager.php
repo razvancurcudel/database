@@ -133,32 +133,45 @@ class MigrationManager
 		$this->migrateUp($config, $flushDatabase);
 	}
 	
-	protected function instantiateMigrations(MigrationConfig $config)
+	public function instantiateMigration($file)
+	{
+		if(!is_file($file))
+		{
+			throw new \RuntimeException(sprintf('Migration file not found: "%s"', $file));
+		}
+		
+		$base = basename($file);
+		
+		if(!\preg_match("'^(Version([0-9]{14}))\\.php$'i", $base, $m))
+		{
+			throw new \RuntimeException(sprintf('Invalid migration file "%s": invalid or missing version', $file));
+		}
+		
+		require_once $file;
+		
+		$className = $m[1];
+		$version = $m[2];
+		
+		if(!class_exists($className, false))
+		{
+			throw new \RuntimeException(sprintf('Migration class not found: %s', $className));
+		}
+		
+		if(!is_subclass_of($className, AbstractMigration::class))
+		{
+			throw new \RuntimeException(sprintf('Migration class %s must extend %s', $className, AbstractMigration::class));
+		}
+		
+		return new $className($version, $this->conn, $this->platform);
+	}
+	
+	public function instantiateMigrations(MigrationConfig $config)
 	{
 		$migrations = [];
 	
-		foreach($config->getMigrations() as $version => $file)
+		foreach($config->getMigrations() as $file)
 		{
-			if(!is_file($file))
-			{
-				throw new \RuntimeException(sprintf('Migration file not found: "%s"', $file));
-			}
-				
-			require_once $file;
-				
-			$className = 'Version' . $version;
-				
-			if(!class_exists($className, false))
-			{
-				throw new \RuntimeException(sprintf('Migration class not found: %s', $className));
-			}
-				
-			if(!is_subclass_of($className, AbstractMigration::class))
-			{
-				throw new \RuntimeException(sprintf('Migration class %s must extend %s', $className, AbstractMigration::class));
-			}
-				
-			$migrations[$version] = new $className($version, $this->conn, $this->platform);
+			$migrations[] = $this->instantiateMigration($file);
 		}
 		
 		ksort($migrations);
@@ -166,7 +179,7 @@ class MigrationManager
 		return $migrations;
 	}
 	
-	protected function executeMigrationUp(AbstractMigration $migration)
+	public function executeMigrationUp(AbstractMigration $migration)
 	{
 		$this->ensureMigrationTableExists();
 		
@@ -189,15 +202,15 @@ class MigrationManager
 		return false;
 	}
 	
-	public function migrateDirectoryDown($dir, ConnectionInterface $conn)
+	public function migrateDirectoryDown($dir)
 	{
-		foreach(array_reverse($this->loadMigrations($dir)) as $migration)
-		{
-			$this->migrateDown($migration);
-		}
+		$config = new MigrationConfig();
+		$config->loadMigrationsFromDirectory($dir);
+		
+		throw new \RuntimeException('Migrating down is not supported yet');
 	}
 	
-	public function migrateDown(AbstractMigration $migration)
+	public function migrateDown(MigrationConfig $config)
 	{
 		throw new \RuntimeException('Migrating down is not supported yet');
 	}
