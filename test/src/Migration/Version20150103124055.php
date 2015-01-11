@@ -19,10 +19,17 @@ class Version20150103124055 extends AbstractMigration
 		$test1->addColumn('id', 'int', ['identity' => true]);
 		$test1->addColumn('title', 'varchar');
 		$test1->create();
+		
+		$test2 = $this->table('#__test2');
+		$test2->addColumn('id', 'uuid', ['primary_key' => true]);
+		$test2->addColumn('label', 'varchar');
+		$test2->addColumn('data', 'blob');
+		$test2->create();
 	}
 	
 	public function down()
 	{
+		$this->dropTable('#__test2');
 		$this->dropTable('#__test1');
 	}
 }
