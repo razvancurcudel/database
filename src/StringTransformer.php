@@ -11,6 +11,8 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Stream\StreamInterface;
+
 /**
  * Transforms a DB column value into a string.
  * 
@@ -34,6 +36,11 @@ class StringTransformer
 		if(is_resource($value))
 		{
 			return stream_get_contents($value);
+		}
+		
+		if($value instanceof StreamInterface)
+		{
+			return $value->getContents();
 		}
 		
 		return (string)$value;

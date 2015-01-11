@@ -11,6 +11,7 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Stream\StreamInterface;
 use KoolKode\Util\UUID;
 
 /**
@@ -28,6 +29,21 @@ class UUIDTransformer
 	 */
 	public function __invoke($value)
 	{
-		return ($value === NULL) ? NULL : new UUID($value);
+		if($value === NULL)
+		{
+			return NULL;
+		}
+		
+		if($value instanceof StreamInterface)
+		{
+			return new UUID($value->getContents());
+		}
+		
+		if(is_resource($value))
+		{
+			return new UUID(stream_get_contents($value));
+		}
+		
+		return new UUID($value);
 	}
 }

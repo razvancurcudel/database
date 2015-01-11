@@ -53,7 +53,11 @@ class StreamTransformer
 			return NULL;
 		}
 		
-		if(is_resource($value))
+		if($value instanceof StreamInterface)
+		{
+			$stream = $value;
+		}
+		elseif(is_resource($value))
 		{
 			$stream = new ResourceStream($value);
 		}
