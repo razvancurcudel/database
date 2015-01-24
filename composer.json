@@ -25,7 +25,8 @@
 		"koolkode/transaction" : "~0.1",
 		"koolkode/stream" : "~0.1",
 		"psr/log" : "~1.0",
-		"doctrine/dbal" : "~2"
+		"doctrine/dbal" : "~2",
+		"symfony/yaml" : "~2.1"
 	},
 	"suggest" : {
 		"koolkode/stream" : "Adds support for streaming LOBs to the database.",
