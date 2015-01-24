@@ -7,15 +7,18 @@ php:
   - hhvm-nightly
 
 env:
-  - 'DB=sqlite'
-  - 'DB=mysql'
-  - 'DB=pgsql'
+  - 'DB=sqlite DEPS=""'
+  - 'DB=mysql DEPS=""'
+  - 'DB=pgsql DEPS=""'
+  - 'DB=sqlite DEPS="--prefer-stable --prefer-lowest"'
+  - 'DB=mysql DEPS="--prefer-stable --prefer-lowest"'
+  - 'DB=pgsql DEPS="--prefer-stable --prefer-lowest"'
 
 before_install:
   - 'composer selfupdate --no-interaction'
 
 install:
-  - 'composer install --no-interaction --dev --prefer-source'
+  - 'composer update --no-interaction --dev --prefer-source $DEPS'
   
 before_script:
   - 'if [[ "$DB" == "sqlite" ]]; then export DB_DSN="sqlite::memory:"; fi'
@@ -23,7 +26,7 @@ before_script:
   - 'if [[ "$DB" == "pgsql" ]]; then export DB_DSN="pgsql:host=localhost;dbname=test"; export DB_USERNAME=postgres; psql -c "CREATE DATABASE test WITH ENCODING = ''UTF8'';" -U postgres; fi'
 
 script:
-  - './vendor/bin/phpunit -c "./test/phpunit.xml" --coverage-text'
+  - './vendor/bin/phpunit -c "./test/phpunit.xml"'
 
 notifications:
   email: false
@@ -34,6 +37,11 @@ matrix:
     - php: hhvm-nightly
   exclude:
     - php: hhvm
-      env: 'DB=pgsql'
+      env: 'DB=pgsql DEPS=""'
     - php: hhvm-nightly
-      env: 'DB=pgsql'
+      env: 'DB=pgsql DEPS=""'
+    - php: hhvm
+      env: 'DB=pgsql DEPS="--prefer-stable --prefer-lowest"'
+    - php: hhvm-nightly
+      env: 'DB=pgsql DEPS="--prefer-stable --prefer-lowest"'
+  
