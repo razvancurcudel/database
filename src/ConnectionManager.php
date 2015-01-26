@@ -169,7 +169,7 @@ class ConnectionManager implements ConnectionManagerInterface
 	 */
 	public function createDoctrineConnection(array $params)
 	{
-		$managed = isset($params['managed']);
+// 		$managed = isset($params['managed']);
 		$options = !empty($params['options']) ? (array)$params['options'] : [];
 		
 		if(array_key_exists('encoding', $params))

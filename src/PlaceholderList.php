@@ -48,7 +48,7 @@ class PlaceholderList implements \Countable, \IteratorAggregate
 		$sql = '';
 		$i = 0;
 		
-		foreach($this->params as $k => $v)
+		foreach(array_keys($this->params) as $k)
 		{
 			if($i++ != 0)
 			{

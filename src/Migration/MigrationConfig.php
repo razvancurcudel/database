@@ -17,7 +17,7 @@ class MigrationConfig
 	
 	public function addMigration(AbstractMigration $migration)
 	{
-		$this->migrations[$migration->getVersion()] = $migrations;
+		$this->migrations[$migration->getVersion()] = $migration;
 		
 		ksort($this->migrations);
 	}

@@ -43,9 +43,7 @@ class MigrationManagerTest extends \PHPUnit_Framework_TestCase
 	public function testUuidTable()
 	{
 		$conn = static::createConnection('mt_');
-	
-		$platform = $conn->getPlatform();
-	
+		
 		$manager = new MigrationManager($conn);
 		$manager->migrateDirectoryUp(__DIR__ . '/../../src/Migration');
 	

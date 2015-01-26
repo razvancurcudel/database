@@ -52,9 +52,9 @@ class Statement extends AbstractStatement
 		
 		$this->bindEncodedParams();
 		
-		$start = microtime(true);
+// 		$start = microtime(true);
 		$this->stmt->execute();
-		$time = microtime(true) - $start;
+// 		$time = microtime(true) - $start;
 		
 		return (int)$this->stmt->rowCount();
 	}
