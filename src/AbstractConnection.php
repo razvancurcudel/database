@@ -238,12 +238,13 @@ abstract class AbstractConnection implements ConnectionInterface
 		try
 		{
 			$sql = sprintf(
-				'SELECT COUNT(*) FROM %s WHERE %s',
+				'SELECT 1 FROM %s WHERE %s',
 				$this->quoteIdentifier($tableName),
 				implode(' AND ', $this->buildIdentity($key))
 			);
 			
 			$stmt = $this->prepare($sql, $prefix)->bindAll($key);
+			$stmt->setLimit(1);
 			$stmt->execute();
 			
 			if($stmt->fetchNextColumn(0))
