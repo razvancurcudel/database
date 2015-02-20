@@ -297,14 +297,17 @@ class PostgreSqlPlatform extends AbstractPlatform
 		$sql .= $this->conn->quoteIdentifier($key->getRefTable());
 		$sql .= ' (' . implode(', ', $ref) . ')';
 		
+		// NO ACTION is equal to RESTRICT but can be deferred.
+		// http://stackoverflow.com/a/3283095
+		
 		if(NULL !== ($update = $key->getOnUpdate()))
 		{
-			$sql .= ' ON UPDATE ' . $update;
+			$sql .= ' ON UPDATE ' . (($update === 'RESTRICT') ? 'NO ACTION' : $update);
 		}
 		
 		if(NULL !== ($delete = $key->getOnDelete()))
 		{
-			$sql .= ' ON DELETE ' . $delete;
+			$sql .= ' ON DELETE ' . (($delete === 'RESTRICT') ? 'NO ACTION' : $delete);
 		}
 		
 		$sql .= ' DEFERRABLE INITIALLY IMMEDIATE';
