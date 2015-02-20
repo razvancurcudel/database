@@ -141,6 +141,7 @@ class MigrationManager
 		}
 		
 		$base = basename($file);
+		$m = NULL;
 		
 		if(!\preg_match("'^(Version([0-9]{14}))\\.php$'i", $base, $m))
 		{

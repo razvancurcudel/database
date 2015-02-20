@@ -66,6 +66,7 @@ class Statement extends AbstractStatement
 					case DB::DRIVER_ORACLE:
 						
 						$num = 0;
+						$m = NULL;
 						
 						if(preg_match("'([0-9]+)[cg]'i", $version, $m))
 						{

@@ -256,6 +256,8 @@ class SqlitePlatform extends AbstractPlatform
 		$this->conn->execute(sprintf("ALTER TABLE %s RENAME TO %s", $this->conn->quoteIdentifier($tableName), $this->conn->quoteIdentifier($tmpName)));
 		
 		// Look for foreign key definitions in existing create table DDL:
+		$m = NULL;
+		
 		if(preg_match_all("',\s*FOREIGN\s+KEY\s*\\(([^\\)]+)\\)\s*REFERENCES\s+([^\\(]+)\s*\\(([^\\)]+)\\)[^,$]*'i", $sql, $m, PREG_SET_ORDER))
 		{
 			$cleanup = function($val) { return trim(trim($val), '"'); };
