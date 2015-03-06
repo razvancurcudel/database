@@ -80,7 +80,7 @@ class ConnectionManager implements ConnectionManagerInterface
 		
 		if($config->has('prefix'))
 		{
-			$conn = new PrefixConnectionDecorator($conn, $config->getString('prefix'));
+			$conn->addDecorator(new PrefixConnectionDecorator($config->getString('prefix')));
 		}
 		
 		return $this->connections[$name] = $conn;
@@ -98,7 +98,7 @@ class ConnectionManager implements ConnectionManagerInterface
 	{
 		if(isset($this->adapters[$name]))
 		{
-			return $this->adapters[$name];
+			return clone $this->adapters[$name];
 		}
 		
 		$config = $this->config->getConfig('adapter');
@@ -124,7 +124,9 @@ class ConnectionManager implements ConnectionManagerInterface
 			$conn = static::createDoctrineConnection($config->toArray());
 		}
 		
-		return $this->adapters[$name] = $conn;
+		$this->adapters[$name] = $conn;
+		
+		return clone $conn;
 	}
 	
 	public function createPDOConnection($dsn, $username = NULL, $password = NULL, array $params = [])

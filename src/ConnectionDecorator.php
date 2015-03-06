@@ -16,7 +16,7 @@ namespace KoolKode\Database;
  * 
  * @author Martin Schröder
  */
-abstract class ConnectionDecorator implements ConnectionInterface
+abstract class ConnectionDecorator implements BaseConnectionInterface
 {
 	/**
 	 * The database connection being decorated.
@@ -25,107 +25,9 @@ abstract class ConnectionDecorator implements ConnectionInterface
 	 */
 	protected $conn;
 	
-	/**
-	 * Decorate the given database connection.
-	 * 
-	 * @param ConnectionInterface $conn
-	 */
-	public function __construct(ConnectionInterface $conn)
+	public final function setConnection(BaseConnectionInterface $conn)
 	{
 		$this->conn = $conn;
-	}
-	
-	/**
-	 * Get the actual connection being decorated (works even in cas eof nested decorators).
-	 * 
-	 * @return ConnectionInterface
-	 */
-	public function getConnection()
-	{
-		if($this->conn instanceof ConnectionDecorator)
-		{
-			return $this->conn->getConnection();
-		}
-		
-		return $this->conn;
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getDriverName()
-	{
-		return $this->conn->getDriverName();
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getPlatform()
-	{
-		$platform = $this->conn->getPlatform();
-		$platform->setConnection($this);
-		
-		return $platform;
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function hasOption($name)
-	{
-		return $this->conn->hasOption($name);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getOption($name)
-	{
-		if(func_num_args() > 1)
-		{
-			return $this->conn->getOption($name, func_get_arg(1));
-		}
-		
-		return $this->conn->getOption($name);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function inTransaction()
-	{
-		return $this->conn->inTransaction();
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function beginTransaction()
-	{
-		$this->conn->beginTransaction();
-		
-		return $this;
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function commit()
-	{
-		$this->conn->commit();
-		
-		return $this;
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function rollBack()
-	{
-		$this->conn->rollBack();
-		
-		return $this;
 	}
 	
 	/**

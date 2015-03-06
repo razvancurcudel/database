@@ -39,7 +39,7 @@ trait DatabaseTestTrait
 		
 		if($prefix !== NULL)
 		{
-			$conn = new PrefixConnectionDecorator($conn, $prefix);
+			$conn->addDecorator(new PrefixConnectionDecorator($prefix));
 		}
 		
 		return $conn;

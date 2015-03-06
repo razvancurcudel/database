@@ -28,7 +28,8 @@ class ConnectionTest extends BaseConnectionTest
 		$manager = new ConnectionManager();
 		
 		$conn = $manager->createPDOConnection($dsn, $username, $password);
+		$conn->addDecorator(new PrefixConnectionDecorator('db_'));
 		
-		return new PrefixConnectionDecorator($conn, 'db_');
+		return $conn;
 	}
 }

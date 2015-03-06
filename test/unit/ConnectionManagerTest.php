@@ -38,8 +38,10 @@ class ConnectionManagerTest extends \PHPUnit_Framework_TestCase
 		
 		$conn = $manager->getConnection('default');
 		$this->assertNotSame($adapter, $conn);
-		$this->assertInstanceOf(PrefixConnectionDecorator::class, $conn);
-		$this->assertEquals('test_', $conn->getPrefix());
+		
+		// Assert prefix decorator is enabled.
+		$this->assertEquals('foo', $adapter->applyPrefix('#__foo'));
+		$this->assertEquals('test_foo', $conn->applyPrefix('#__foo'));
 	}
 	
 	/**

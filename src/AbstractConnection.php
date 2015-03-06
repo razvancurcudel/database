@@ -24,6 +24,21 @@ abstract class AbstractConnection implements ConnectionInterface
 	
 	protected $options = [];
 	
+	protected $decorators = [];
+	
+	public function addDecorator(ConnectionDecorator $decorator)
+	{
+		$this->decorators[] = $decorator;
+	}
+	
+	public function removeDecorator(ConnectionDecorator $decorator)
+	{
+		if(false !== ($index = array_search($decorator, $this->decorators, true)))
+		{
+			array_splice($this->decorators, $index, 1);
+		}
+	}
+	
 	/**
 	 * {@inheritdoc}
 	 */
@@ -152,6 +167,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function execute($sql, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->execute($sql, $prefix);
+		}
+		
 		return $this->prepare($sql, $prefix)->execute();
 	}
 	
@@ -170,6 +190,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function insert($tableName, array $values, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->insert($tableName, $values, $prefix);
+		}
+		
 		$sql = sprintf(
 			'INSERT INTO %s (%s) VALUES (%s)',
 			$this->quoteIdentifier($tableName),
@@ -185,6 +210,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function upsert($tableName, array $key, array $values, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->upsert($tableName, $key, $values, $prefix);
+		}
+		
 		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
 		
 		// Ensure at least one value is set in update statement.
@@ -271,6 +301,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function update($tableName, array $key, array $values, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->update($tableName, $key, $values, $prefix);
+		}
+		
 		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
 		
 		$sql = sprintf(
@@ -288,6 +323,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function delete($tableName, array $key, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->delete($tableName, $key, $prefix);
+		}
+		
 		$sql = sprintf(
 			'DELETE FROM %s WHERE %s',
 			$this->quoteIdentifier($tableName),
@@ -398,6 +438,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function quoteIdentifier($identifier)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->quoteIdentifier($identifier);
+		}
+		
 		switch($this->driverName)
 		{
 			case DB::DRIVER_MYSQL:
@@ -414,6 +459,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function applyPrefix($value, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->applyPrefix($value, $prefix);
+		}
+		
 		return str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $value);
 	}
 }

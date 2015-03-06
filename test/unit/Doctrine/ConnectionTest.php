@@ -33,7 +33,8 @@ class ConnectionTest extends BaseConnectionTest
 			'password' => $password,
 			'charset' => 'utf8'
 		]);
+		$conn->addDecorator(new PrefixConnectionDecorator('db_'));
 		
-		return new PrefixConnectionDecorator($conn, 'db_');
+		return $conn;
 	}
 }

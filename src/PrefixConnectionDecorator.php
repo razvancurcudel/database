@@ -28,24 +28,11 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	/**
 	 * Wrap an existing connection using a schema object prefix decorator.
 	 * 
-	 * @param ConnectionInterface $conn
 	 * @param string $prefix
 	 */
-	public function __construct(ConnectionInterface $conn, $prefix)
+	public function __construct($prefix)
 	{
-		parent::__construct($conn);
-		
 		$this->prefix = (string)$prefix;
-	}
-	
-	/**
-	 * Get the schema object prefix being applied.
-	 * 
-	 * @return string
-	 */
-	public function getPrefix()
-	{
-		return $this->prefix;
 	}
 	
 	/**

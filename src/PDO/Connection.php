@@ -12,6 +12,7 @@
 namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\AbstractConnection;
+use KoolKode\Database\ConnectionDecoratorChain;
 use KoolKode\Database\DB;
 
 /**
@@ -158,6 +159,11 @@ class Connection extends AbstractConnection
 	 */
 	public function prepare($sql, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->prepare($sql, $prefix);
+		}
+		
 		return new Statement($this, $this->prepareSql($sql, $prefix));
 	}
 	
@@ -166,6 +172,11 @@ class Connection extends AbstractConnection
 	 */
 	public function lastInsertId($sequenceName, $prefix = NULL)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->lastInsertId($sequenceName, $prefix);
+		}
+		
 		return $this->determineLastInsertId([$this->pdo, 'lastInsertId'], $sequenceName, $prefix);
 	}
 	
@@ -174,6 +185,11 @@ class Connection extends AbstractConnection
 	 */
 	public function quote($value)
 	{
+		if(ConnectionDecoratorChain::isDecorate())
+		{
+			return (new ConnectionDecoratorChain($this, $this->decorators))->quote($value);
+		}
+		
 		return $this->pdo->quote($value);
 	}
 	
