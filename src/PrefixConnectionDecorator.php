@@ -38,64 +38,8 @@ class PrefixConnectionDecorator extends ConnectionDecorator
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql, $prefix = NULL)
+	public function applyPrefix($value)
 	{
-		return $this->conn->execute($sql, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function prepare($sql, $prefix = NULL)
-	{
-		return $this->conn->prepare($sql, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function insert($tableName, array $values, $prefix = NULL)
-	{
-		return $this->conn->insert($tableName, $values, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function upsert($tableName, array $key, array $values, $prefix = NULL)
-	{
-		return $this->conn->upsert($tableName, $key, $values, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function update($tableName, array $key, array $values, $prefix = NULL)
-	{
-		return $this->conn->update($tableName, $key, $values, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function delete($tableName, array $key, $prefix = NULL)
-	{
-		return $this->conn->delete($tableName, $key, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function lastInsertId($sequenceName, $prefix = NULL)
-	{
-		return $this->conn->lastInsertId($sequenceName, ($prefix === NULL) ? $this->prefix : $prefix);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function applyPrefix($value, $prefix = NULL)
-	{
-		return $this->conn->applyPrefix($value, ($prefix === NULL) ? $this->prefix : $prefix);
+		return str_replace(DB::SCHEMA_OBJECT_PREFIX, $this->prefix, $value);
 	}
 }

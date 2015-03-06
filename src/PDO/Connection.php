@@ -157,27 +157,27 @@ class Connection extends AbstractConnection
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql, $prefix = NULL)
+	public function prepare($sql)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->prepare($sql, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->prepare($sql);
 		}
 		
-		return new Statement($this, $this->prepareSql($sql, $prefix));
+		return new Statement($this, $this->prepareSql($sql));
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName, $prefix = NULL)
+	public function lastInsertId($sequenceName)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->lastInsertId($sequenceName, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->lastInsertId($sequenceName);
 		}
 		
-		return $this->determineLastInsertId([$this->pdo, 'lastInsertId'], $sequenceName, $prefix);
+		return $this->determineLastInsertId([$this->pdo, 'lastInsertId'], $sequenceName);
 	}
 	
 	/**

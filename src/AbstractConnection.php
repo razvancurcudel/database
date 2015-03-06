@@ -165,20 +165,20 @@ abstract class AbstractConnection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql, $prefix = NULL)
+	public function execute($sql)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->execute($sql, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->execute($sql);
 		}
 		
-		return $this->prepare($sql, $prefix)->execute();
+		return $this->prepare($sql)->execute();
 	}
 	
-	protected function prepareSql($sql, $prefix = NULL)
+	protected function prepareSql($sql)
 	{
 		$sql = trim(preg_replace("'\s+'", ' ', $sql));
-		$sql = str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $sql);
+		$sql = $this->applyPrefix($sql);
 		
 		return preg_replace_callback("'`([^`]*)`'", function($m) {
 			return $this->quoteIdentifier($m[1]);
@@ -188,11 +188,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function insert($tableName, array $values, $prefix = NULL)
+	public function insert($tableName, array $values)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->insert($tableName, $values, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->insert($tableName, $values);
 		}
 		
 		$sql = sprintf(
@@ -202,17 +202,17 @@ abstract class AbstractConnection implements ConnectionInterface
 			implode(', ', $this->buildParamList($values))
 		);
 		
-		return $this->prepare($sql, $prefix)->bindAll($values)->execute();
+		return $this->prepare($sql)->bindAll($values)->execute();
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $key, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->upsert($tableName, $key, $values, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->upsert($tableName, $key, $values);
 		}
 		
 		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
@@ -239,7 +239,7 @@ abstract class AbstractConnection implements ConnectionInterface
 // 					implode(', ', $this->buildParamList($params))
 // 				);
 				
-// 				return $this->prepare($sql, $prefix)->bindAll($params)->execute();
+// 				return $this->prepare($sql)->bindAll($params)->execute();
 				
 // 			case DB::DRIVER_MYSQL:
 				
@@ -260,7 +260,7 @@ abstract class AbstractConnection implements ConnectionInterface
 // 					);
 // 				}
 				
-// 				return $this->prepare($sql, $prefix)->bindAll($params)->execute();
+// 				return $this->prepare($sql)->bindAll($params)->execute();
 // 		}
 		
 		$this->beginTransaction();
@@ -273,17 +273,17 @@ abstract class AbstractConnection implements ConnectionInterface
 				implode(' AND ', $this->buildIdentity($key))
 			);
 			
-			$stmt = $this->prepare($sql, $prefix)->bindAll($key);
+			$stmt = $this->prepare($sql)->bindAll($key);
 			$stmt->setLimit(1);
 			$stmt->execute();
 			
 			if($stmt->fetchNextColumn(0))
 			{
-				$this->update($tableName, $key, $values, $prefix);
+				$this->update($tableName, $key, $values);
 			}
 			else
 			{
-				$this->insert($tableName, array_merge($values, $key), $prefix);
+				$this->insert($tableName, array_merge($values, $key));
 			}
 		}
 		catch(\Exception $e)
@@ -299,11 +299,11 @@ abstract class AbstractConnection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function update($tableName, array $key, array $values, $prefix = NULL)
+	public function update($tableName, array $key, array $values)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->update($tableName, $key, $values, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->update($tableName, $key, $values);
 		}
 		
 		$params = array_merge($this->prefixKeys('v', $values), $this->prefixKeys('k', $key));
@@ -315,17 +315,17 @@ abstract class AbstractConnection implements ConnectionInterface
 			implode(' AND ', $this->buildIdentity($key, 'k'))
 		);
 		
-		return $this->prepare($sql, $prefix)->bindAll($params)->execute();
+		return $this->prepare($sql)->bindAll($params)->execute();
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function delete($tableName, array $key, $prefix = NULL)
+	public function delete($tableName, array $key)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->delete($tableName, $key, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->delete($tableName, $key);
 		}
 		
 		$sql = sprintf(
@@ -334,7 +334,7 @@ abstract class AbstractConnection implements ConnectionInterface
 			implode(' AND ', $this->buildIdentity($key))	
 		);
 		
-		return $this->prepare($sql, $prefix)->bindAll($key)->execute();
+		return $this->prepare($sql)->bindAll($key)->execute();
 	}
 	
 	/**
@@ -402,10 +402,9 @@ abstract class AbstractConnection implements ConnectionInterface
 	 * 
 	 * @param callable $callback The native callback to be invoked.
 	 * @param mixed $sequenceName Name of a sequence or an array containing a table name and a column name of a SERIAL column.
-	 * @param string $prefix
 	 * @return integer
 	 */
-	protected function determineLastInsertId(callable $callback, $sequenceName, $prefix = NULL)
+	protected function determineLastInsertId(callable $callback, $sequenceName)
 	{
 		switch($this->driverName)
 		{
@@ -416,13 +415,13 @@ abstract class AbstractConnection implements ConnectionInterface
 				if(is_array($sequenceName))
 				{
 					$stmt = $this->prepare("SELECT currval(pg_get_serial_sequence(:table, :col))");
-					$stmt->bindValue('table', $this->prepareSql($sequenceName[0], $prefix));
+					$stmt->bindValue('table', $this->prepareSql($sequenceName[0]));
 					$stmt->bindValue('col', $sequenceName[1]);
 					$stmt->execute();
 						
 					return (int)$stmt->fetchNextColumn(0);
 				}
-				return $callback($this->prepareSql($sequenceName, $prefix));
+				return $callback($this->prepareSql($sequenceName));
 			case DB::DRIVER_MYSQL:
 				$stmt = $this->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
 				$stmt->execute();
@@ -430,7 +429,7 @@ abstract class AbstractConnection implements ConnectionInterface
 				return (int)$stmt->fetchNextColumn(0);
 		}
 	
-		return $callback($this->prepareSql($sequenceName, $prefix));
+		return $callback($this->prepareSql($sequenceName));
 	}
 	
 	/**
@@ -457,13 +456,13 @@ abstract class AbstractConnection implements ConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function applyPrefix($value, $prefix = NULL)
+	public function applyPrefix($value)
 	{
 		if(ConnectionDecoratorChain::isDecorate())
 		{
-			return (new ConnectionDecoratorChain($this, $this->decorators))->applyPrefix($value, $prefix);
+			return (new ConnectionDecoratorChain($this, $this->decorators))->applyPrefix($value);
 		}
 		
-		return str_replace(DB::SCHEMA_OBJECT_PREFIX, ($prefix === NULL) ? '' : $prefix, $value);
+		return str_replace(DB::SCHEMA_OBJECT_PREFIX, '', $value);
 	}
 }

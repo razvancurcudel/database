@@ -50,18 +50,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql, $prefix = NULL)
+	public function execute($sql)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->execute($sql, $prefix);
+			return $this->decorators[$this->index++]->execute($sql);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->execute($sql, $prefix);
+			return $this->conn->execute($sql);
 		}
 		finally
 		{
@@ -72,18 +72,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql, $prefix = NULL)
+	public function prepare($sql)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->prepare($sql, $prefix);
+			return $this->decorators[$this->index++]->prepare($sql);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->prepare($sql, $prefix);
+			return $this->conn->prepare($sql);
 		}
 		finally
 		{
@@ -94,18 +94,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function insert($tableName, array $values, $prefix = NULL)
+	public function insert($tableName, array $values)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->insert($tableName, $values, $prefix);
+			return $this->decorators[$this->index++]->insert($tableName, $values);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->insert($tableName, $values, $prefix);
+			return $this->conn->insert($tableName, $values);
 		}
 		finally
 		{
@@ -116,18 +116,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $key, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->upsert($tableName, $key, $values, $prefix);
+			return $this->decorators[$this->index++]->upsert($tableName, $key, $values);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->upsert($tableName, $key, $values, $prefix);
+			return $this->conn->upsert($tableName, $key, $values);
 		}
 		finally
 		{
@@ -138,18 +138,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function update($tableName, array $key, array $values, $prefix = NULL)
+	public function update($tableName, array $key, array $values)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->update($tableName, $key, $values, $prefix);
+			return $this->decorators[$this->index++]->update($tableName, $key, $values);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->update($tableName, $key, $values, $prefix);
+			return $this->conn->update($tableName, $key, $values);
 		}
 		finally
 		{
@@ -160,18 +160,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function delete($tableName, array $key, $prefix = NULL)
+	public function delete($tableName, array $key)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->delete($tableName, $key, $prefix);
+			return $this->decorators[$this->index++]->delete($tableName, $key);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->delete($tableName, $key, $prefix);
+			return $this->conn->delete($tableName, $key);
 		}
 		finally
 		{
@@ -182,18 +182,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName, $prefix = NULL)
+	public function lastInsertId($sequenceName)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->lastInsertId($sequenceName, $prefix);
+			return $this->decorators[$this->index++]->lastInsertId($sequenceName);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->lastInsertId($sequenceName, $prefix);
+			return $this->conn->lastInsertId($sequenceName);
 		}
 		finally
 		{
@@ -248,18 +248,18 @@ class ConnectionDecoratorChain implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function applyPrefix($value, $prefix = NULL)
+	public function applyPrefix($value)
 	{
 		if(isset($this->decorators[$this->index]))
 		{
-			return $this->decorators[$this->index++]->applyPrefix($value, $prefix);
+			return $this->decorators[$this->index++]->applyPrefix($value);
 		}
 		
 		self::$decorate = false;
 		
 		try
 		{
-			return $this->conn->applyPrefix($value, $prefix);
+			return $this->conn->applyPrefix($value);
 		}
 		finally
 		{

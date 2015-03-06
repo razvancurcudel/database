@@ -28,9 +28,9 @@ class ParamEncoderDecorator extends ConnectionDecorator
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql, $prefix = NULL)
+	public function prepare($sql)
 	{
-		$stmt = $this->conn->prepare($sql, $prefix);
+		$stmt = $this->conn->prepare($sql);
 		
 		foreach($this->encoders as $encoder)
 		{

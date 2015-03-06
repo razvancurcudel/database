@@ -33,57 +33,57 @@ abstract class ConnectionDecorator implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function execute($sql, $prefix = NULL)
+	public function execute($sql)
 	{
-		return $this->conn->execute($sql, $prefix);
+		return $this->conn->execute($sql);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function prepare($sql, $prefix = NULL)
+	public function prepare($sql)
 	{
-		return $this->conn->prepare($sql, $prefix);
+		return $this->conn->prepare($sql);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function insert($tableName, array $values, $prefix = NULL)
+	public function insert($tableName, array $values)
 	{
-		return $this->conn->insert($tableName, $values, $prefix);
+		return $this->conn->insert($tableName, $values);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function upsert($tableName, array $key, array $values, $prefix = NULL)
+	public function upsert($tableName, array $key, array $values)
 	{
-		return $this->conn->upsert($tableName, $key, $values, $prefix);
+		return $this->conn->upsert($tableName, $key, $values);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function update($tableName, array $key, array $values, $prefix = NULL)
+	public function update($tableName, array $key, array $values)
 	{
-		return $this->conn->update($tableName, $key, $values, $prefix);
+		return $this->conn->update($tableName, $key, $values);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function delete($tableName, array $key, $prefix = NULL)
+	public function delete($tableName, array $key)
 	{
-		return $this->conn->delete($tableName, $key, $prefix);
+		return $this->conn->delete($tableName, $key);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
-	public function lastInsertId($sequenceName, $prefix = NULL)
+	public function lastInsertId($sequenceName)
 	{
-		return $this->conn->lastInsertId($sequenceName, $prefix);
+		return $this->conn->lastInsertId($sequenceName);
 	}
 	
 	/**
@@ -105,8 +105,8 @@ abstract class ConnectionDecorator implements BaseConnectionInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function applyPrefix($value, $prefix = NULL)
+	public function applyPrefix($value)
 	{
-		return $this->conn->applyPrefix($value, $prefix);
+		return $this->conn->applyPrefix($value);
 	}
 }
