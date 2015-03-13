@@ -1,0 +1,26 @@
+<?php
+
+return [
+	'ConnectionManager' => [
+		'adapter' => [
+			'default' => [
+				'dsn' => ###DSN###,
+				'username' => ###USERNAME###,
+				'password' => ###PASSWORD###
+			]
+		],
+		'connection' => [
+			'default' => [
+				'adapter' => 'default',
+				'prefix' => ''
+			]
+		]
+	],
+	'Migration' => [
+		'MigrationManager' => [
+			'directories' => [
+				// TODO: Configure directories to be scanned for migration files.
+			]
+		]
+	]
+];
