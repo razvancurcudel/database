@@ -12,6 +12,7 @@
 use KoolKode\Database\Command\GenerateMigrationCommand;
 use KoolKode\Database\Command\MigrateUpCommand;
 use Symfony\Component\Console\Application;
+use KoolKode\Database\Command\FlushCommand;
 
 $parts = explode(DIRECTORY_SEPARATOR, getcwd());
 $dir = NULL;
@@ -37,7 +38,10 @@ if($dir === NULL)
 
 require $dir . '/vendor/autoload.php';
 
+$configFile = $dir . DIRECTORY_SEPARATOR . '.kkdb.php';
+
 $app = new Application('KoolKode DB Console');
 $app->add(new GenerateMigrationCommand($dir . DIRECTORY_SEPARATOR . 'migration'));
-$app->add(new MigrateUpCommand($dir . DIRECTORY_SEPARATOR . '.kkdb.php'));
+$app->add(new FlushCommand($configFile));
+$app->add(new MigrateUpCommand($configFile));
 $app->run();
