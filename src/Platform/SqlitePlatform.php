@@ -297,7 +297,7 @@ class SqlitePlatform extends AbstractPlatform
 		switch($type)
 		{
 			case Column::TYPE_BIG_INT:
-				return ['name' => 'bigint'];
+				return ['name' => 'integer'];
 			case Column::TYPE_BINARY:
 				return ['name' => 'binary', 'limit' => 250];
 			case Column::TYPE_BLOB:
