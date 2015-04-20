@@ -11,6 +11,7 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Database\Exception\DatabaseException;
 use KoolKode\Database\Platform\AbstractPlatform;
 
 /**
@@ -80,6 +81,8 @@ interface ConnectionInterface extends BaseConnectionInterface
 	 * Begin a new transaction, will utilize nested transactions when they are supported.
 	 * 
 	 * @return ConnectionInterface
+	 * 
+	 * @throws DatabaseException
 	 */
 	public function beginTransaction();
 	
@@ -87,6 +90,8 @@ interface ConnectionInterface extends BaseConnectionInterface
 	 * Commit the current transaction.
 	 * 
 	 * @return ConnectionInterface
+	 * 
+	 * @throws DatabaseException
 	 */
 	public function commit();
 	
@@ -94,6 +99,16 @@ interface ConnectionInterface extends BaseConnectionInterface
 	 * Roll back all changes being performed within the current transaction.
 	 * 
 	 * @return ConnectionInterface
+	 * 
+	 * @throws DatabaseException
 	 */
 	public function rollBack();
+	
+	/**
+	 * Convert an arbitrary exception into an appropriate DB exception.
+	 *
+	 * @param \Exception $e
+	 * @return DatabaseException
+	 */
+	public function convertException(\Exception $e);
 }

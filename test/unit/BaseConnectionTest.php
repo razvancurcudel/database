@@ -320,4 +320,26 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		$stmt->execute();
 		$this->assertEquals([11 => 'TEST 1', 12 => 'TEST 2'], $stmt->fetchMap('id', 'title'));
 	}
+	
+	/**
+	 * @expectedException \KoolKode\Database\Exception\UniqueConstraintViolationException
+	 */
+	public function testDetectsUniqueKeyViolation()
+	{
+		$this->conn->insert('#__tag', ['name' => 'FOO']);
+		$this->conn->insert('#__tag', ['name' => 'FOO']);
+	}
+	
+	/**
+	 * @expectedException \KoolKode\Database\Exception\ForeignKeyConstraintViolationException
+	 */
+	public function testDetectsForeignKeyViolation()
+	{
+		$this->conn->insert('#__post', [
+			'blog_id' => 124,
+			'title' => 'FOO',
+			'content' => 'BAR',
+			'created_at' => time()
+		]);
+	}
 }

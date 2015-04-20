@@ -104,18 +104,25 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function beginTransaction()
 	{
-		if($this->transLevel == 0)
+		try
 		{
-			$this->performBeginTransaction();
+			if($this->transLevel == 0)
+			{
+				$this->performBeginTransaction();
+			}
+			else
+			{
+				$this->performBeginTransaction('LEVEL' . $this->transLevel);
+			}
+			
+			$this->transLevel++;
+			
+			return $this;
 		}
-		else
+		catch(\Exception $e)
 		{
-			$this->performBeginTransaction('LEVEL' . $this->transLevel);
+			throw $this->convertException($e);
 		}
-		
-		$this->transLevel++;
-		
-		return $this;
 	}
 	
 	protected abstract function performBeginTransaction($identifier = NULL);
@@ -125,18 +132,25 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function commit()
 	{
-		$this->transLevel--;
-	
-		if($this->transLevel == 0)
+		try
 		{
-			$this->performCommit();
-		}
-		else
-		{
-			$this->performCommit('LEVEL' . $this->transLevel);
-		}
+			$this->transLevel--;
 		
-		return $this;
+			if($this->transLevel == 0)
+			{
+				$this->performCommit();
+			}
+			else
+			{
+				$this->performCommit('LEVEL' . $this->transLevel);
+			}
+			
+			return $this;
+		}
+		catch(\Exception $e)
+		{
+			throw $this->convertException($e);
+		}
 	}
 	
 	protected abstract function performCommit($identifier = NULL);
@@ -146,18 +160,25 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	public function rollBack()
 	{
-		$this->transLevel--;
-	
-		if($this->transLevel == 0)
+		try
 		{
-			$this->performRollBack();
-		}
-		else
-		{
-			$this->performRollBack('LEVEL' . $this->transLevel);
-		}
+			$this->transLevel--;
 		
-		return $this;
+			if($this->transLevel == 0)
+			{
+				$this->performRollBack();
+			}
+			else
+			{
+				$this->performRollBack('LEVEL' . $this->transLevel);
+			}
+			
+			return $this;
+		}
+		catch(\Exception $e)
+		{
+			throw $this->convertException($e);
+		}
 	}
 	
 	protected abstract function performRollBack($identifier = NULL);
@@ -290,7 +311,7 @@ abstract class AbstractConnection implements ConnectionInterface
 		{
 			$this->rollBack();
 			
-			throw $e;
+			throw $this->convertException($e);
 		}
 		
 		$this->commit();
@@ -406,30 +427,37 @@ abstract class AbstractConnection implements ConnectionInterface
 	 */
 	protected function determineLastInsertId(callable $callback, $sequenceName)
 	{
-		switch($this->driverName)
+		try
 		{
-			case DB::DRIVER_MYSQL:
-			case DB::DRIVER_SQLITE:
-				return $callback();
-			case DB::DRIVER_POSTGRESQL:
-				if(is_array($sequenceName))
-				{
-					$stmt = $this->prepare("SELECT currval(pg_get_serial_sequence(:table, :col))");
-					$stmt->bindValue('table', $this->prepareSql($sequenceName[0]));
-					$stmt->bindValue('col', $sequenceName[1]);
+			switch($this->driverName)
+			{
+				case DB::DRIVER_MYSQL:
+				case DB::DRIVER_SQLITE:
+					return $callback();
+				case DB::DRIVER_POSTGRESQL:
+					if(is_array($sequenceName))
+					{
+						$stmt = $this->prepare("SELECT currval(pg_get_serial_sequence(:table, :col))");
+						$stmt->bindValue('table', $this->prepareSql($sequenceName[0]));
+						$stmt->bindValue('col', $sequenceName[1]);
+						$stmt->execute();
+							
+						return (int)$stmt->fetchNextColumn(0);
+					}
+					return $callback($this->prepareSql($sequenceName));
+				case DB::DRIVER_MYSQL:
+					$stmt = $this->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
 					$stmt->execute();
 						
 					return (int)$stmt->fetchNextColumn(0);
-				}
-				return $callback($this->prepareSql($sequenceName));
-			case DB::DRIVER_MYSQL:
-				$stmt = $this->prepare("SELECT CAST(COALESCE(SCOPE_IDENTITY(), @@IDENTITY) AS int)");
-				$stmt->execute();
-					
-				return (int)$stmt->fetchNextColumn(0);
+			}
+		
+			return $callback($this->prepareSql($sequenceName));
 		}
-	
-		return $callback($this->prepareSql($sequenceName));
+		catch(\Exception $e)
+		{
+			throw $this->convertException($e);
+		}
 	}
 	
 	/**

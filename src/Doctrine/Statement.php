@@ -32,31 +32,38 @@ class Statement extends AbstractStatement
 	 */
 	public function execute()
 	{
-		if($this->stmt === NULL)
+		try
 		{
-			$dconn = $this->conn->getDoctrineConnection();
-			$sql = $this->sql;
-			
-			if($this->limit > 0)
+			if($this->stmt === NULL)
 			{
-				$dconn->getDatabasePlatform()->modifyLimitQuery($sql, $this->limit, ($this->offset > 0) ? $this->offset : NULL);
+				$dconn = $this->conn->getDoctrineConnection();
+				$sql = $this->sql;
+				
+				if($this->limit > 0)
+				{
+					$dconn->getDatabasePlatform()->modifyLimitQuery($sql, $this->limit, ($this->offset > 0) ? $this->offset : NULL);
+				}
+				
+				$this->stmt = $dconn->prepare($sql);
+				$this->stmt->setFetchMode(\PDO::FETCH_ASSOC);
+			}
+			else
+			{
+				$this->closeCursor();
 			}
 			
-			$this->stmt = $dconn->prepare($sql);
-			$this->stmt->setFetchMode(\PDO::FETCH_ASSOC);
+			$this->bindEncodedParams();
+			
+	// 		$start = microtime(true);
+			$this->stmt->execute();
+	// 		$time = microtime(true) - $start;
+			
+			return (int)$this->stmt->rowCount();
 		}
-		else
+		catch(\Exception $e)
 		{
-			$this->closeCursor();
+			throw $this->conn->convertException($e);
 		}
-		
-		$this->bindEncodedParams();
-		
-// 		$start = microtime(true);
-		$this->stmt->execute();
-// 		$time = microtime(true) - $start;
-		
-		return (int)$this->stmt->rowCount();
 	}
 	
 	/**
@@ -66,7 +73,11 @@ class Statement extends AbstractStatement
 	{
 		if($this->stmt !== NULL)
 		{
-			$this->stmt->closeCursor();
+			try
+			{
+				$this->stmt->closeCursor();
+			}
+			catch(\Exception $e) { }
 		}
 		
 		return $this;

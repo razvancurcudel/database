@@ -15,6 +15,9 @@ use Doctrine\DBAL\Connection as DoctrineConnection;
 use KoolKode\Database\AbstractConnection;
 use KoolKode\Database\ConnectionDecoratorChain;
 use KoolKode\Database\DB;
+use KoolKode\Database\Exception\DatabaseException;
+use KoolKode\Database\Exception\ForeignKeyConstraintViolationException;
+use KoolKode\Database\Exception\UniqueConstraintViolationException;
 
 /**
  * Adapts a wrapped Doctrine DBAL connection to the KoolKode Database API.
@@ -45,6 +48,7 @@ class Connection extends AbstractConnection
 		{
 			case 'pdo_sqlite':
 				$this->driverName = DB::DRIVER_SQLITE;
+				$this->initializeSqlite();
 				break;
 			case 'pdo_mysql':
 			case 'drizzle_pdo_mysql':
@@ -142,7 +146,14 @@ class Connection extends AbstractConnection
 			return (new ConnectionDecoratorChain($this, $this->decorators))->quote($value);
 		}
 		
-		return $this->conn->quote($value);
+		try
+		{
+			return $this->conn->quote($value);
+		}
+		catch(\Exception $e)
+		{
+			throw $this->convertException($e);
+		}
 	}
 	
 	/**
@@ -155,6 +166,68 @@ class Connection extends AbstractConnection
 			return (new ConnectionDecoratorChain($this, $this->decorators))->quoteIdentifier($identifier);
 		}
 		
-		return $this->conn->quoteIdentifier($identifier);
+		try
+		{
+			return $this->conn->quoteIdentifier($identifier);
+		}
+		catch(\Exception $e)
+		{
+			throw $this->convertException($e);
+		}
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function convertException(\Exception $e)
+	{
+		if($e instanceof \Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException)
+		{
+			throw new ForeignKeyConstraintViolationException($e->getMessage(), 0, $e);
+		}
+		
+		if($e instanceof \Doctrine\DBAL\Exception\UniqueConstraintViolationException)
+		{
+			throw new UniqueConstraintViolationException($e->getMessage(), 0, $e);
+		}
+	
+		if($e instanceof DatabaseException)
+		{
+			return $e;
+		}
+		
+		// Check for PDO exception in order to determine FK violation:
+		$cause = $e;
+		
+		while(NULL !== ($cause = $cause->getPrevious()))
+		{
+			if($cause instanceof \PDOException)
+			{
+				$state = (string)isset($cause->errorInfo[0]) ? $cause->errorInfo[0] : $cause->getCode();
+				
+				if($state == '23000')
+				{
+					if(stripos($cause->getMessage(), 'foreign') !== false)
+					{
+						return new ForeignKeyConstraintViolationException($e->getMessage(), 0, $e);
+					}
+				}
+			}
+		}
+		
+		return new DatabaseException($e->getMessage(), 0, $e);
+	}
+	
+	protected function initializeSqlite()
+	{
+		$this->execute("PRAGMA foreign_keys = ON");
+	
+		if(array_key_exists(DB::OPTION_SQLITE_PRAGMA, $this->options))
+		{
+			foreach((array)$this->options[DB::OPTION_SQLITE_PRAGMA] as $k => $v)
+			{
+				$this->execute(sprintf("PRAGMA %s = %s", $k, $v));
+			}
+		}
 	}
 }

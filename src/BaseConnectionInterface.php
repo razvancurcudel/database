@@ -11,6 +11,10 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Database\Exception\ForeignKeyConstraintViolationException;
+use KoolKode\Database\Exception\UniqueConstraintViolationException;
+use KoolKode\Database\Exception\DatabaseException;
+
 /**
  * Contract for base operation that can be performed using a DB connection.
  * 
@@ -24,7 +28,11 @@ interface BaseConnectionInterface
 	 *
 	 * @param string $sql
 	 * @return integer
-	*/
+	 * 
+	 * @throws DatabaseException
+	 * @throws ForeignKeyConstraintViolationException
+	 * @throws UniqueConstraintViolationException
+	 */
 	public function execute($sql);
 	
 	/**
@@ -32,7 +40,9 @@ interface BaseConnectionInterface
 	 *
 	 * @param string $sql
 	 * @return StatementInterface
-	*/
+	 * 
+	 * @throws DatabaseException
+	 */
 	public function prepare($sql);
 	
 	/**
@@ -40,7 +50,11 @@ interface BaseConnectionInterface
 	 *
 	 * @param string $tableName
 	 * @param array<string, mixed> $values
-	*/
+	 * 
+	 * @throws DatabaseException
+	 * @throws ForeignKeyConstraintViolationException
+	 * @throws UniqueConstraintViolationException
+	 */
 	public function insert($tableName, array $values);
 	
 	/**
@@ -50,7 +64,11 @@ interface BaseConnectionInterface
 	 * @param string $tableName
 	 * @param array<string, mixed> $key
 	 * @param array<string, mixed> $values
-	*/
+	 * 
+	 * @throws DatabaseException
+	 * @throws ForeignKeyConstraintViolationException
+	 * @throws UniqueConstraintViolationException
+	 */
 	public function upsert($tableName, array $key, array $values);
 	
 	/**
@@ -60,7 +78,11 @@ interface BaseConnectionInterface
 	 * @param array<string, mixed> $key
 	 * @param array<string, mixed> $values
 	 * @return integer The number of affected rows.
-	*/
+	 * 
+	 * @throws DatabaseException
+	 * @throws ForeignKeyConstraintViolationException
+	 * @throws UniqueConstraintViolationException
+	 */
 	public function update($tableName, array $key, array $values);
 	
 	/**
@@ -69,7 +91,10 @@ interface BaseConnectionInterface
 	 * @param string $tableName
 	 * @param array<string, mixed> $key
 	 * @return integer The number of deleted rows.
-	*/
+	 * 
+	 * @throws DatabaseException
+	 * @throws ForeignKeyConstraintViolationException
+	 */
 	public function delete($tableName, array $key);
 	
 	/**
@@ -77,7 +102,9 @@ interface BaseConnectionInterface
 	 *
 	 * @param mixed $sequenceName Name of a sequence or an array containing table name and column name of a SERIAL column.
 	 * @return integer
-	*/
+	 * 
+	 * @throws DatabaseException
+	 */
 	public function lastInsertId($sequenceName);
 	
 	/**
@@ -87,7 +114,9 @@ interface BaseConnectionInterface
 	 *
 	 * @param mixed $value
 	 * @return mixed
-	*/
+	 * 
+	 * @throws DatabaseException
+	 */
 	public function quote($value);
 	
 	/**
@@ -95,7 +124,7 @@ interface BaseConnectionInterface
 	 *
 	 * @param string $identifier
 	 * @return string
-	*/
+	 */
 	public function quoteIdentifier($identifier);
 	
 	/**
@@ -103,6 +132,6 @@ interface BaseConnectionInterface
 	 *
 	 * @param string $value
 	 * @return string
-	*/
+	 */
 	public function applyPrefix($value);
 }
