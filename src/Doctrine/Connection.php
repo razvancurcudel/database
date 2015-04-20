@@ -18,6 +18,7 @@ use KoolKode\Database\DB;
 use KoolKode\Database\Exception\DatabaseException;
 use KoolKode\Database\Exception\ForeignKeyConstraintViolationException;
 use KoolKode\Database\Exception\UniqueConstraintViolationException;
+use KoolKode\Database\PDO\ExceptionConverterTrait;
 
 /**
  * Adapts a wrapped Doctrine DBAL connection to the KoolKode Database API.
@@ -26,6 +27,8 @@ use KoolKode\Database\Exception\UniqueConstraintViolationException;
  */
 class Connection extends AbstractConnection
 {
+	use ExceptionConverterTrait;
+	
 	/**
 	 * The wrapped Doctrine connection.
 	 * 
@@ -190,32 +193,8 @@ class Connection extends AbstractConnection
 		{
 			throw new UniqueConstraintViolationException($e->getMessage(), 0, $e);
 		}
-	
-		if($e instanceof DatabaseException)
-		{
-			return $e;
-		}
 		
-		// Check for PDO exception in order to determine FK violation:
-		$cause = $e;
-		
-		while(NULL !== ($cause = $cause->getPrevious()))
-		{
-			if($cause instanceof \PDOException)
-			{
-				$state = (string)isset($cause->errorInfo[0]) ? $cause->errorInfo[0] : $cause->getCode();
-				
-				if($state == '23000')
-				{
-					if(stripos($cause->getMessage(), 'foreign') !== false)
-					{
-						return new ForeignKeyConstraintViolationException($e->getMessage(), 0, $e);
-					}
-				}
-			}
-		}
-		
-		return new DatabaseException($e->getMessage(), 0, $e);
+		return $this->convertDatabaseException($e);
 	}
 	
 	protected function initializeSqlite()

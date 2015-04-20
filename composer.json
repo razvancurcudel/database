@@ -25,7 +25,7 @@
 		"koolkode/transaction" : "~0.1",
 		"koolkode/stream" : "~0.1",
 		"psr/log" : "~1.0",
-		"doctrine/dbal" : "~2.5@stable",
+		"doctrine/dbal" : "~2.2@stable",
 		"symfony/yaml" : "~2.1@stable"
 	},
 	"suggest" : {
