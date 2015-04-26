@@ -48,6 +48,41 @@ class ConnectionManager implements ConnectionManagerInterface
 		];
 	}
 	
+	/**
+	 * Creates a connection manager from a <code>.kkdb.php</code> config file.
+	 * 
+	 * @param string $file
+	 * @return ConnectionManager
+	 * 
+	 * @throws \RuntimeException When the config file could not be found.
+	 */
+	public static function fromConfigFile($file)
+	{
+		if(!is_file($file))
+		{
+			throw new \RuntimeException(sprintf('Config file "%s" does not exist', $file));
+		}
+		
+		$config = new Configuration(static::processConfigFileData(require $file));
+		
+		return new ConnectionManager($config->getConfig('ConnectionManager'));
+	}
+	
+	protected static function processConfigFileData(array $data)
+	{
+		$result = array_change_key_case($data, CASE_LOWER);
+	
+		foreach($result as & $val)
+		{
+			if(is_array($val))
+			{
+				$val = static::processConfigFileData($val);
+			}
+		}
+	
+		return $result;
+	}
+	
 	public function setTransactionManager(TransactionManagerInterface $manager = NULL)
 	{
 		$this->manager = $manager;
