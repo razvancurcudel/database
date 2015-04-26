@@ -40,7 +40,7 @@ require $dir . '/vendor/autoload.php';
 
 $configFile = $dir . DIRECTORY_SEPARATOR . '.kkdb.php';
 
-$app = new Application('KoolKode DB Console');
+$app = new Application('KoolKode DB Console', '0.1.5');
 $app->add(new GenerateMigrationCommand($dir . DIRECTORY_SEPARATOR . 'migration'));
 $app->add(new FlushCommand($configFile));
 $app->add(new MigrateUpCommand($configFile));
