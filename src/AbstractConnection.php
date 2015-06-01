@@ -11,6 +11,8 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Event\EventDispatcherInterface;
+
 /**
  * Base class for KoolKode Database connections.
  * 
@@ -18,24 +20,80 @@ namespace KoolKode\Database;
  */
 abstract class AbstractConnection implements ConnectionInterface
 {
+	/**
+	 * Current transaction level / depth.
+	 * 
+	 * @var integer
+	 */
 	protected $transLevel = 0;
 	
+	/**
+	 * Normalized DB driver name.
+	 * 
+	 * @var string
+	 */
 	protected $driverName;
 	
+	/**
+	 * DB adapter options.
+	 * 
+	 * @var array
+	 */
 	protected $options = [];
 	
+	/**
+	 * Registered connection decorators.
+	 * 
+	 * @var array<ConnectionDecorator>
+	 */
 	protected $decorators = [];
 	
+	/**
+	 * Optional event dispatcher.
+	 * 
+	 * @var EventDispatcherInterface
+	 */
+	protected $eventDispatcher;
+	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function addDecorator(ConnectionDecorator $decorator)
 	{
 		$this->decorators[] = $decorator;
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
 	public function removeDecorator(ConnectionDecorator $decorator)
 	{
 		if(false !== ($index = array_search($decorator, $this->decorators, true)))
 		{
 			array_splice($this->decorators, $index, 1);
+		}
+	}
+	
+	/**
+	 * Inject the event dispatcher instance.
+	 * 
+	 * @param EventDispatcherInterface $dispatcher
+	 */
+	public function setEventDispatcher(EventDispatcherInterface $dispatcher = NULL)
+	{
+		$this->eventDispatcher = $dispatcher;
+	}
+	
+	/**
+	 * Dispatch the given notification event.
+	 * 
+	 * @param object $event
+	 */
+	public function notify($event)
+	{
+		if($this->eventDispatcher !== NULL)
+		{
+			$this->eventDispatcher->notify($event);
 		}
 	}
 	

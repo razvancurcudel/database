@@ -13,6 +13,7 @@ namespace KoolKode\Database\PDO;
 
 use KoolKode\Database\AbstractStatement;
 use KoolKode\Database\DB;
+use KoolKode\Database\Event\QueryExecutedEvent;
 
 /**
  * Adapts a wrapped PDO statement to the KoolKode Database API.
@@ -118,9 +119,11 @@ class Statement extends AbstractStatement
 			
 			$this->bindEncodedParams();
 			
-	// 		$start = microtime(true);
+			$start = microtime(true);
 			$this->stmt->execute();
-	// 		$time = microtime(true) - $start;
+			$time = microtime(true) - $start;
+			
+			$this->conn->notify(new QueryExecutedEvent($this->sql, $this->params, $this->limit, $this->offset, $time));
 			
 			return (int)$this->stmt->rowCount();
 		}

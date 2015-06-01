@@ -11,7 +11,9 @@
 
 namespace KoolKode\Database;
 
+use KoolKode\Database\Event\QueryExecutedEvent;
 use KoolKode\Database\Test\DatabaseTestTrait;
+use KoolKode\Event\EventDispatcher;
 
 abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 {
@@ -24,9 +26,18 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 	 */
 	protected $conn;
 	
+	/**
+	 * Event dispatcher being injected via connection manager.
+	 * 
+	 * @var EventDispatcher
+	 */
+	protected $eventDispatcher;
+	
 	protected function setUp()
 	{
 		parent::setUp();
+		
+		$this->eventDispatcher = new EventDispatcher();
 		
 		$this->conn = $this->createDatabaseConnection();
 		
@@ -345,6 +356,11 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 	
 	public function testCanUseInClauseWithinIdentity()
 	{
+		$executed = [];
+		$this->eventDispatcher->connect(function(QueryExecutedEvent $event) use(& $executed) {
+			$executed[] = $event->sql;
+		});
+		
 		$this->conn->insert('#__blog', ['title' => 'Test 2', 'created_at' => time()]);
 		$id1 = $this->conn->lastInsertId(['#__blog', 'id']);
 		
@@ -360,5 +376,7 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 		$stmt = $this->conn->prepare("SELECT `title` FROM `#__blog` ORDER BY `title`");
 		$stmt->execute();
 		$this->assertEquals(['Foo', 'Foo'], $stmt->fetchColumns('title'));
+		
+		$this->assertCount(5, $executed);
 	}
 }

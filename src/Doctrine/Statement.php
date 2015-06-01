@@ -13,6 +13,7 @@ namespace KoolKode\Database\Doctrine;
 
 use Doctrine\DBAL\Driver\Statement as DoctrineStatement;
 use KoolKode\Database\AbstractStatement;
+use KoolKode\Database\Event\QueryExecutedEvent;
 
 /**
  * Adapts a wrapped Doctrine statement to the KoolKode Database API.
@@ -54,9 +55,11 @@ class Statement extends AbstractStatement
 			
 			$this->bindEncodedParams();
 			
-	// 		$start = microtime(true);
+			$start = microtime(true);
 			$this->stmt->execute();
-	// 		$time = microtime(true) - $start;
+			$time = microtime(true) - $start;
+			
+			$this->conn->notify(new QueryExecutedEvent($this->sql, $this->params, $this->limit, $this->offset, $time));
 			
 			return (int)$this->stmt->rowCount();
 		}

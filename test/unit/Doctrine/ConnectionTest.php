@@ -26,6 +26,7 @@ class ConnectionTest extends BaseConnectionTest
 		$password = self::getEnvParam('DB_PASSWORD', NULL);
 		
 		$manager = new ConnectionManager();
+		$manager->setEventDispatcher($this->eventDispatcher);
 		
 		$conn = $manager->createDoctrineConnection([
 			'dsn' => $dsn,

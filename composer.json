@@ -26,9 +26,11 @@
 		"koolkode/stream" : "~0.1",
 		"psr/log" : "~1.0",
 		"doctrine/dbal" : "~2.2@stable",
-		"symfony/yaml" : "~2.1@stable"
+		"symfony/yaml" : "~2.1@stable",
+		"koolkode/event" : "~0.1"
 	},
 	"suggest" : {
+		"koolkode/event" : "Enables triggering of events whenever DB queries are being performed.",
 		"koolkode/stream" : "Adds support for streaming LOBs to the database.",
 		"koolkode/transaction" : "Allows for externally managed transactions.",
 		"koolkode/util" : "Adds support for automated conversion of UUID params into appropriate DB values.",

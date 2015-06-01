@@ -13,6 +13,7 @@ namespace KoolKode\Database;
 
 use Doctrine\DBAL\DriverManager;
 use KoolKode\Config\Configuration;
+use KoolKode\Event\EventDispatcherInterface;
 use KoolKode\Transaction\TransactionManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -28,6 +29,8 @@ class ConnectionManager implements ConnectionManagerInterface
 	protected $connections = [];
 	
 	protected $config;
+	
+	protected $eventDispatcher;
 	
 	protected $logger;
 	
@@ -81,6 +84,11 @@ class ConnectionManager implements ConnectionManagerInterface
 		}
 	
 		return $result;
+	}
+	
+	public function setEventDispatcher(EventDispatcherInterface $dispatcher = NULL)
+	{
+		$this->eventDispatcher = $dispatcher;
 	}
 	
 	public function setTransactionManager(TransactionManagerInterface $manager = NULL)
@@ -156,7 +164,7 @@ class ConnectionManager implements ConnectionManagerInterface
 		}
 		else
 		{
-			$conn = static::createDoctrineConnection($config->toArray());
+			$conn = $this->createDoctrineConnection($config->toArray());
 		}
 		
 		$this->adapters[$name] = $conn;
@@ -192,6 +200,8 @@ class ConnectionManager implements ConnectionManagerInterface
 		{
 			$conn = new PDO\Connection($pdo, $params['options']);
 		}
+		
+		$conn->setEventDispatcher($this->eventDispatcher);
 		
 		return $conn;
 	}
@@ -263,6 +273,9 @@ class ConnectionManager implements ConnectionManagerInterface
 			$params = array_merge($cfg, $params);
 		}
 		
-		return new Doctrine\Connection(DriverManager::getConnection($params), $options);
+		$conn = new Doctrine\Connection(DriverManager::getConnection($params), $options);
+		$conn->setEventDispatcher($this->eventDispatcher);
+		
+		return $conn;
 	}
 }
