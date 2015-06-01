@@ -342,4 +342,23 @@ abstract class BaseConnectionTest extends \PHPUnit_Framework_TestCase
 			'created_at' => time()
 		]);
 	}
+	
+	public function testCanUseInClauseWithinIdentity()
+	{
+		$this->conn->insert('#__blog', ['title' => 'Test 2', 'created_at' => time()]);
+		$id1 = $this->conn->lastInsertId(['#__blog', 'id']);
+		
+		$this->conn->insert('#__blog', ['title' => 'Test 1', 'created_at' => time()]);
+		$id2 = $this->conn->lastInsertId(['#__blog', 'id']);
+		
+		$stmt = $this->conn->prepare("SELECT `title` FROM `#__blog` ORDER BY `title`");
+		$stmt->execute();
+		$this->assertEquals(['Test 1', 'Test 2'], $stmt->fetchColumns('title'));
+		
+		$this->conn->update('#__blog', ['id' => [$id1, $id2]], ['title' => 'Foo']);
+		
+		$stmt = $this->conn->prepare("SELECT `title` FROM `#__blog` ORDER BY `title`");
+		$stmt->execute();
+		$this->assertEquals(['Foo', 'Foo'], $stmt->fetchColumns('title'));
+	}
 }

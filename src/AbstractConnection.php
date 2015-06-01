@@ -291,10 +291,10 @@ abstract class AbstractConnection implements ConnectionInterface
 			$sql = sprintf(
 				'SELECT 1 FROM %s WHERE %s',
 				$this->quoteIdentifier($tableName),
-				implode(' AND ', $this->buildIdentity($key))
+				implode(' AND ', $this->buildIdentity($key, '', true))
 			);
 			
-			$stmt = $this->prepare($sql)->bindAll($key);
+			$stmt = $this->prepare($sql)->bindAll($this->prepareParams($key));
 			$stmt->setLimit(1);
 			$stmt->execute();
 			
@@ -333,10 +333,10 @@ abstract class AbstractConnection implements ConnectionInterface
 			'UPDATE %s SET %s WHERE %s',
 			$this->quoteIdentifier($tableName),
 			implode(', ', $this->buildIdentity($values, 'v')),
-			implode(' AND ', $this->buildIdentity($key, 'k'))
+			implode(' AND ', $this->buildIdentity($key, 'k', true))
 		);
 		
-		return $this->prepare($sql)->bindAll($params)->execute();
+		return $this->prepare($sql)->bindAll($this->prepareParams($params))->execute();
 	}
 	
 	/**
@@ -352,10 +352,10 @@ abstract class AbstractConnection implements ConnectionInterface
 		$sql = sprintf(
 			'DELETE FROM %s WHERE %s',
 			$this->quoteIdentifier($tableName),
-			implode(' AND ', $this->buildIdentity($key))	
+			implode(' AND ', $this->buildIdentity($key, '', true))	
 		);
 		
-		return $this->prepare($sql)->bindAll($key)->execute();
+		return $this->prepare($sql)->bindAll($this->prepareParams($key))->execute();
 	}
 	
 	/**
@@ -409,13 +409,68 @@ abstract class AbstractConnection implements ConnectionInterface
 	 * 
 	 * @param array<string, mixed> $values
 	 * @param string $namePrefix
+	 * @param boolean $allowIn
 	 * @return array<string>
 	 */
-	protected function buildIdentity(array $values, $namePrefix = '')
+	protected function buildIdentity(array $values, $namePrefix = '', $allowIn = false)
 	{
-		return array_map(function($key) use($namePrefix) {
-			return $this->quoteIdentifier($key) . ' = :' . $namePrefix . $key;
-		}, array_keys($values));
+		if(!$allowIn)
+		{
+			return array_map(function($key) use($namePrefix) {
+				return $this->quoteIdentifier($key) . ' = :' . $namePrefix . $key;
+			}, array_keys($values));
+		}
+		
+		$identity = [];
+		
+		foreach($values as $k => $v)
+		{
+			if(is_array($v))
+			{
+				$placeholders = [];
+				
+				foreach(range(0, count($v) - 1) as $i)
+				{
+					$placeholders[] = sprintf(':%s%s%u', $namePrefix, $k, $i);
+				}
+				
+				$identity[] = sprintf('%s IN (%s)', $this->quoteIdentifier($k), implode(', ', $placeholders));
+			}
+			else
+			{
+				$identity[] = sprintf('%s = :%s%s', $this->quoteIdentifier($k), $namePrefix, $k);
+			}
+		}
+		
+		return $identity;
+	}
+	
+	/**
+	 * Prepare query params supporting arrays as IN() clause.
+	 * 
+	 * @param array $params
+	 * @return array
+	 */
+	protected function prepareParams(array $params)
+	{
+		$prepared = [];
+		
+		foreach($params as $k => $v)
+		{
+			if(is_array($v))
+			{
+				foreach(array_values($v) as $i => $val)
+				{
+					$prepared[sprintf('%s%u', $k, $i)] = $val;
+				}
+			}
+			else
+			{
+				$prepared[(string)$k] = $v;
+			}
+		}
+		
+		return $prepared;
 	}
 	
 	/**
@@ -433,7 +488,7 @@ abstract class AbstractConnection implements ConnectionInterface
 			{
 				case DB::DRIVER_MYSQL:
 				case DB::DRIVER_SQLITE:
-					return $callback();
+					return (int)$callback();
 				case DB::DRIVER_POSTGRESQL:
 					if(is_array($sequenceName))
 					{
@@ -452,7 +507,7 @@ abstract class AbstractConnection implements ConnectionInterface
 					return (int)$stmt->fetchNextColumn(0);
 			}
 		
-			return $callback($this->prepareSql($sequenceName));
+			return (int)$callback($this->prepareSql($sequenceName));
 		}
 		catch(\Exception $e)
 		{
