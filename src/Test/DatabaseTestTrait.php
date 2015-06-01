@@ -15,6 +15,7 @@ use KoolKode\Database\ConnectionInterface;
 use KoolKode\Database\ConnectionManager;
 use KoolKode\Database\Migration\MigrationManager;
 use KoolKode\Database\PrefixConnectionDecorator;
+use KoolKode\Event\EventDispatcherInterface;
 
 /**
  * Mixin for DB tests creating connections from env variables.
@@ -27,15 +28,19 @@ trait DatabaseTestTrait
 	 * Create a PDO-based DB connection.
 	 * 
 	 * @param string $prefix
+	 * @param EventDispatcherInterface $dispatcher
 	 * @return ConnectionInterface
 	 */
-	protected static function createConnection($prefix = NULL)
+	protected static function createConnection($prefix = NULL, EventDispatcherInterface $dispatcher = NULL)
 	{
 		$dsn = (string)static::getEnvParam('DB_DSN', 'sqlite::memory:');
 		$username = static::getEnvParam('DB_USERNAME', NULL);
 		$password = static::getEnvParam('DB_PASSWORD', NULL);
 		
-		$conn = (new ConnectionManager())->createPDOConnection($dsn, $username, $password);
+		$manager = new ConnectionManager();
+		$manager->setEventDispatcher($dispatcher);
+		
+		$conn = $manager->createPDOConnection($dsn, $username, $password);
 		
 		if($prefix !== NULL)
 		{
