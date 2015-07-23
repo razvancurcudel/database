@@ -22,7 +22,6 @@
 	},
 	"require-dev" : {
 		"phpunit/phpunit" : "~4.7",
-		"koolkode/transaction" : "~0.1",
 		"koolkode/stream" : "~0.1",
 		"psr/log" : "~1.0",
 		"doctrine/dbal" : "~2.2",

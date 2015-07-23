@@ -14,7 +14,6 @@ namespace KoolKode\Database;
 use Doctrine\DBAL\DriverManager;
 use KoolKode\Config\Configuration;
 use KoolKode\Event\EventDispatcherInterface;
-use KoolKode\Transaction\TransactionManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -33,8 +32,6 @@ class ConnectionManager implements ConnectionManagerInterface
 	protected $eventDispatcher;
 	
 	protected $logger;
-	
-	protected $manager;
 	
 	public function __construct(Configuration $config = NULL)
 	{
@@ -89,11 +86,6 @@ class ConnectionManager implements ConnectionManagerInterface
 	public function setEventDispatcher(EventDispatcherInterface $dispatcher = NULL)
 	{
 		$this->eventDispatcher = $dispatcher;
-	}
-	
-	public function setTransactionManager(TransactionManagerInterface $manager = NULL)
-	{
-		$this->manager = $manager;
 	}
 	
 	public function setLogger(LoggerInterface $logger = NULL)
@@ -192,15 +184,7 @@ class ConnectionManager implements ConnectionManagerInterface
 		$pdo = new \PDO($dsn, $username, $password);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		
-		if($this->manager !== NULL && isset($params['managed']))
-		{
-			$conn = new PDO\ManagedConnection($this->manager, $pdo, $params['options']);
-		}
-		else
-		{
-			$conn = new PDO\Connection($pdo, $params['options']);
-		}
-		
+		$conn = new PDO\Connection($pdo, $params['options']);
 		$conn->setEventDispatcher($this->eventDispatcher);
 		
 		return $conn;
