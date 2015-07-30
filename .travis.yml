@@ -1,4 +1,11 @@
+sudo: false
+
 language: php
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+    - vendor
 
 php:
   - 5.5
@@ -18,7 +25,8 @@ before_install:
   - 'composer selfupdate --no-interaction'
 
 install:
-  - 'composer update -n $DEPS'
+  - 'travis_retry composer update --no-interaction $DEPS'
+  - 'composer info -i'
   
 before_script:
   - 'if [[ "$DB" == "sqlite" ]]; then export DB_DSN="sqlite::memory:"; fi'
