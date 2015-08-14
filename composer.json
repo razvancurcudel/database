@@ -22,7 +22,7 @@
 	},
 	"require-dev" : {
 		"phpunit/phpunit" : "~4.7",
-		"koolkode/stream" : "~0.1",
+		"koolkode/stream" : "^0.1.3",
 		"psr/log" : "~1.0",
 		"doctrine/dbal" : "~2.2",
 		"symfony/yaml" : "~2.1",
