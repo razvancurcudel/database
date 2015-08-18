@@ -6,9 +6,9 @@ use KoolKode\Database\Test\DatabaseTestTrait;
 use KoolKode\Database\StreamTransformer;
 use KoolKode\Database\StringTransformer;
 use KoolKode\Database\UUIDTransformer;
-use KoolKode\Stream\StreamInterface;
-use KoolKode\Stream\UrlStream;
+use KoolKode\Stream\ResourceInputStream;
 use KoolKode\Util\UUID;
+use Psr\Http\Message\StreamInterface;
 
 class MigrationManagerTest extends \PHPUnit_Framework_TestCase
 {
@@ -48,7 +48,7 @@ class MigrationManagerTest extends \PHPUnit_Framework_TestCase
 		$manager->migrateDirectoryUp(__DIR__ . '/../../src/Migration');
 	
 		$uuid = UUID::createRandom();
-		$data = ['id' => $uuid, 'label' => 'Test entry #1', 'data' => new UrlStream(__FILE__, 'rb')];
+		$data = ['id' => $uuid, 'label' => 'Test entry #1', 'data' => ResourceInputStream::fromUrl(__FILE__)];
 		
 		$conn->insert('#__test2', $data);
 		

@@ -11,7 +11,7 @@
 
 namespace KoolKode\Database;
 
-use KoolKode\Stream\StreamInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Transforms a DB column value into a string.
@@ -40,6 +40,11 @@ class StringTransformer
 		
 		if($value instanceof StreamInterface)
 		{
+			if(!$value->isReadable())
+			{
+				throw new \InvalidArgumentException('Stream must be readable in order to be converted to string');
+			}
+			
 			return $value->getContents();
 		}
 		

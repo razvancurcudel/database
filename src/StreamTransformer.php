@@ -11,10 +11,10 @@
 
 namespace KoolKode\Database;
 
-use KoolKode\Stream\GzipInputStream;
-use KoolKode\Stream\ResourceStream;
-use KoolKode\Stream\StreamInterface;
+use KoolKode\Stream\InflateInputStream;
+use KoolKode\Stream\ResourceInputStream;
 use KoolKode\Stream\StringStream;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Transforms a column in DB result into an input stream.
@@ -59,13 +59,13 @@ class StreamTransformer
 		}
 		elseif(is_resource($value))
 		{
-			$stream = new ResourceStream($value);
+			$stream = new ResourceInputStream($value);
 		}
 		else
 		{
-			$stream = new StringStream((string)$value);
+			$stream = new StringStream($value);
 		}
 		
-		return $this->compressed ? new GzipInputStream($stream) : $stream;
+		return $this->compressed ? new InflateInputStream($stream) : $stream;
 	}
 }

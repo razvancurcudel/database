@@ -11,8 +11,8 @@
 
 namespace KoolKode\Database;
 
-use KoolKode\Stream\StreamInterface;
 use KoolKode\Util\UUID;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Transforms a column in a DB result row into a UUID object.
@@ -34,14 +34,19 @@ class UUIDTransformer
 			return NULL;
 		}
 		
-		if($value instanceof StreamInterface)
-		{
-			return new UUID($value->getContents());
-		}
-		
 		if(is_resource($value))
 		{
 			return new UUID(stream_get_contents($value));
+		}
+		
+		if($value instanceof StreamInterface)
+		{
+			if(!$value->isReadable())
+			{
+				throw new \InvalidArgumentException('Stream must be readable in order to be converted into a UUID');
+			}
+			
+			return new UUID($value->getContents());
 		}
 		
 		return new UUID($value);

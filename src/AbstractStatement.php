@@ -11,8 +11,9 @@
 
 namespace KoolKode\Database;
 
-use KoolKode\Stream\StreamInterface;
+use KoolKode\Stream\StreamWrapper;
 use KoolKode\Util\UUID;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Baseclass for KoolKode Database statements.
@@ -107,7 +108,20 @@ abstract class AbstractStatement implements StatementInterface
 				
 			if($v instanceof StreamInterface)
 			{
-				$this->stmt->bindValue($k, fopen((string)$v, 'rb'), \PDO::PARAM_LOB);
+				if(!$v->isReadable())
+				{
+					throw new \InvalidArgumentException('Input stream must be readable to be used as DB input param');
+				}
+				
+				// FIXME: This is a workaround for PHP7 crashing with Sqlite LOB params bound to input streams...
+				if($this->conn->getDriverName() == DB::DRIVER_SQLITE && defined('PHP_MAJOR_VERSION') && PHP_MAJOR_VERSION > 5)
+				{
+					$this->stmt->bindValue($k, $v->getContents());
+				}
+				else
+				{
+					$this->stmt->bindValue($k, (new StreamWrapper($v))->getResource(), \PDO::PARAM_LOB);
+				}
 			}
 			elseif($v instanceof UUID)
 			{
