@@ -47,8 +47,6 @@
 		"bin/kkdb"
 	],
 	"extra" : {
-		"preferred-install" : "dist",
-		"optimize-autoloader" : true,
 		"branch-alias" : {
 			"dev-master" : "0.1.x-dev"
 		}

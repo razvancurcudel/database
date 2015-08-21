@@ -25,7 +25,7 @@ before_install:
   - 'composer selfupdate --no-interaction'
 
 install:
-  - 'travis_retry composer update --no-interaction $DEPS'
+  - 'travis_retry composer update --no-interaction --prefer-source $DEPS'
   - 'composer info -i'
   
 before_script:
