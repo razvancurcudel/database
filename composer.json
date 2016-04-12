@@ -15,7 +15,7 @@
 	],
 	"minimum-stability" : "stable",
 	"require" : {
-		"php" : ">=5.5.0",
+		"php" : ">=5.6.0",
 		"koolkode/config" : "~0.1",
 		"koolkode/util" : "~0.1",
 		"symfony/console" : "~2"
