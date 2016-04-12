@@ -43,8 +43,7 @@ class ConnectionManager implements ConnectionManagerInterface
 		return [
 			'adapters' => array_keys($this->adapters),
 			'connections' => array_keys($this->connections),
-			'config' => $this->config,
-			'manager' => $this->manager
+			'config' => $this->config
 		];
 	}
 	
